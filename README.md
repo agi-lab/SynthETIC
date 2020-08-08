@@ -1,2 +1,0 @@
-# SynthETIC
-SynthETIC Claim Simulator
