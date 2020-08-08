@@ -104,7 +104,8 @@ payment as if it occurred at time 60 for the purpose of inflation.
 SI_occurrence <- function(occurrence_time, claim_size) {1}
 SI_payment <- function(payment_time, claim_size) {1}
 # base inflation constant at 0.02 p.a. effective
-base_inflation_vector <- rep((1 + 0.02)^(1/4) - 1, times = 40)
+# (length is 80 to cover the maximum time period)
+base_inflation_vector <- rep((1 + 0.02)^(1/4) - 1, times = 80)
 attach(test_claims_object)
 payment_inflated_list <- claim_payment_inflation(
   frequency_vector, payment_size_list, payment_time_list,
