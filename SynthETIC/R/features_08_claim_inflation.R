@@ -170,8 +170,8 @@ claim_payment_inflation <- function(
 
   total_pmt_count <- length(unlist(payment_inflated))
   if (adjustment / total_pmt_count > 0.03) {
-    warning(sprintf("More than 3% of the payments were outside the bound.\n
-                    Check your notification and/or settlement delay assumptions!"))
+    warning("More than 3% of the payments were outside the bound.
+    Check your notification and/or settlement delay assumptions!")
   }
   payment_inflated
 }

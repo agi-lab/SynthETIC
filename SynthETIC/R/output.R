@@ -68,8 +68,8 @@ claim_output <- function(
 
   total_pmt_count <- length(unlist(payment_size_list))
   if (adjustment / total_pmt_count > 0.03) {
-    warning(sprintf("More than 3% of the payments were outside the bound.\n
-                    Check your notification and/or settlement delay assumptions!"))
+    warning("More than 3% of the payments were outside the bound.
+    Check your notification and/or settlement delay assumptions!")
   }
 
   if (aggregate_level != 1) {
