@@ -3,9 +3,13 @@ SynthETIC Claim Simulator
 
 ## Install Package (for public repo)
 `remotes::install_github("agi-lab/SynthETIC/SynthETIC", build_vignettes = TRUE)`
+
 After the installation, run
+
 `library(SynthETIC)`
+
 as you would normally do will load the package. View a full demonstration of the package (which is used to generate the built-in test datasets discussed in the paper) by running
+
 `RShowDoc("SynthETIC-demo", package = "SynthETIC")`
 
 ## Additional Resources
