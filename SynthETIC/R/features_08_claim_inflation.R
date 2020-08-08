@@ -81,7 +81,8 @@
 #' SI_occurrence <- function(occurrence_time, claim_size) {1}
 #' SI_payment <- function(payment_time, claim_size) {1}
 #' # base inflation constant at 0.02 p.a. effective
-#' base_inflation_vector <- rep((1 + 0.02)^(1/4) - 1, times = 40)
+#' # (length is 80 to cover the maximum time period)
+#' base_inflation_vector <- rep((1 + 0.02)^(1/4) - 1, times = 80)
 #' attach(test_claims_object)
 #' payment_inflated_list <- claim_payment_inflation(
 #'   frequency_vector, payment_size_list, payment_time_list,
@@ -104,7 +105,8 @@ claim_payment_inflation <- function(
 
   I <- length(frequency_vector)
   # convert to number of calendar quarters (floor should be unnecessary)
-  no_quarters <- floor(I * .pkgenv$time_unit * 4)
+  # times 2 to get the maximum calendar period
+  no_quarters <- floor(I * .pkgenv$time_unit * 4) * 2
 
   # base inflation, default nil
   if (missing(base_inflation_vector)) {
