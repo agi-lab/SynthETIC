@@ -497,8 +497,8 @@ SI_payment <- function(payment_time, claim_size) {
 ```{r}
 # shorter equivalent code:
 # payment_inflated <- claim_payment_inflation(
-#   n_vector, payment_sizes, payment_times, claim_sizes, base_inflation_vector
-# )
+#   n_vector, payment_sizes, payment_times, occurrence_times, claim_sizes, 
+#   base_inflation_vector)
 payment_inflated <- claim_payment_inflation(
   n_vector,
   payment_sizes,
