@@ -53,6 +53,11 @@ payment times (period)          `payment_periods[[i]][[j]]` = payment times (in 
 actual payments (inflated)      `payment_inflated[[i]][[j]]` = $ partial payments (inflated) for claim *j* of occurrence period *i*
 ------------------------------------------------------------------------------------------
 
+Reference
+---
+For a full description of `SythETIC`'s structure and test parameters, readers should refer to:
+
+Avanzi B, Taylor G, Wang M, Wong B (2020). "SynthETIC: an individual insurance claim simulator with feature control". [arXiv:2008.05693](https://arxiv.org/abs/2008.05693).
 
 Set Up
 ---
