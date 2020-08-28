@@ -1,8 +1,8 @@
-# SynthETIC
+# SynthETIC [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/SynthETIC)](https://CRAN.R-project.org/package=SynthETIC)
 SynthETIC Claim Simulator
 
 ## Introduction
-`SynthETIC` is an individual claims simulator which generates various features of non-life insurance claims. An initial set of test parameters, designed to mirror the experience of an Auto Liability portfolio, were set up and applied by default to generate a realistic test data set of individual claims (see vignette). The simulated data set then allows practitioners to back-test the validity of various reserving models and to prove and/or disprove certain actuarial assumptions made in claims modelling. The distributional assumptions used to generate this data set can be easily modified by users to match their experiences. Reference: Avanzi B, Taylor G, Wang M, Wong B (2020) "SynthETIC: an individual insurance claim simulator with feature control" <[arXiv:2008.05693](https://arxiv.org/abs/2008.05693)>.
+[`SynthETIC`](https://CRAN.R-project.org/package=SynthETIC) is an individual claims simulator which generates various features of non-life insurance claims. An initial set of test parameters, designed to mirror the experience of an Auto Liability portfolio, were set up and applied by default to generate a realistic test data set of individual claims (see vignette). The simulated data set then allows practitioners to back-test the validity of various reserving models and to prove and/or disprove certain actuarial assumptions made in claims modelling. The distributional assumptions used to generate this data set can be easily modified by users to match their experiences. Reference: Avanzi B, Taylor G, Wang M, Wong B (2020) "SynthETIC: an individual insurance claim simulator with feature control" <[arXiv:2008.05693](https://arxiv.org/abs/2008.05693)>.
 
 ## Install Package
 To install the [CRAN version of the package](https://CRAN.R-project.org/package=SynthETIC), do
