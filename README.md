@@ -7,7 +7,7 @@ SynthETIC Claim Simulator
 ## Install Package
 To install the [CRAN version of the package](https://CRAN.R-project.org/package=SynthETIC), do
 
-`install_packages("SynthETIC")`
+`install.packages("SynthETIC")`
 
 To install the development version of the package from this GitHub repository, do
 
