@@ -4,25 +4,20 @@
 \alias{claim_notification}
 \title{Claim Notification}
 \usage{
-claim_notification(
-  frequency_vector,
-  claim_size_list,
-  mean_function,
-  cv_function
-)
+claim_notification(frequency_vector, claim_size_list, rfun, paramfun, ...)
 }
 \arguments{
 \item{frequency_vector}{a vector of claim frequencies for all the periods.}
 
 \item{claim_size_list}{list of claim sizes.}
 
-\item{mean_function}{target mean of the Weibull distribution as a function
-of \code{claim_size} and \code{occurrence_period} (see Details for default
-mean function).}
+\item{rfun}{optional alternative random sampling function; if not specified,
+assumes Weibull.}
 
-\item{cv_function}{target CoV (Coefficient of Variation) of the Weibull
-distribution as a function of \code{claim_size} and \code{occurrence_period}
-(see Details for default CoV function).}
+\item{paramfun}{parameters for the random sampling function, as a function of
+\code{claim_size} and \code{occurrence_period}; see Details.}
+
+\item{...}{other arguments/parameters to be passed onto \code{paramfun}.}
 }
 \value{
 A list of notification delays such that the \eqn{i}th component of
@@ -31,14 +26,26 @@ period \eqn{i}.
 }
 \description{
 Simulates and returns the notification/reporting delays of each of the
-claims occurring in each of the periods, assuming a Weibull distribution.
+claims occurring in each of the periods, according to a user-specified
+distribution (by default a Weibull).
 }
 \details{
 Claim notification delay represents the delay from claim occurrence
-to claim reporting. It is assumed that the notification delay follows a
-Weibull distribution with parameters possibly dependent on claim size and
-occurrence period. \cr \cr
-By default, we assume that mean notification delay (in quarters) is given by
+to reporting. \code{SynthETIC} assumes the (removable) dependence of notification
+delay on claim size and occurrence period of the claim, thus requiring the
+user to specify a \code{paramfun} of \code{claim_size} and \code{occurrrence_period} (with
+the option to add more arguments as needed).
+
+The \code{paramfun} should return the distribution parameters in a \strong{vector},
+e.g. for gamma distribution \code{paramfun} should return a value in the format of
+\code{c(shape = , scale = )}, for exponential distribution this should return
+\code{c(rate = )}. See Examples. If a \code{rfun} is specified without a \code{paramfun},
+\code{SynthETIC} will try to proceed without parameterisation (i.e. directly
+calling \code{rfun} with claim size and occurrence period), and if it fails,
+return an error message.
+
+By default, it is assumed that the notification delay follows a Weibull
+distribution, and that the mean notification delay (in quarters) is given by
 \deqn{min(3, max(1, 2-[log(claim_size/(0.50*ref_claim))]/3))}
 automatically converted to the relevant \code{time_unit} defined by user at the
 top of their script through \code{\link{set_parameters}}. Note that the
@@ -47,15 +54,23 @@ user needs to define through \code{\link{set_parameters}} as it determines
 the monetary scale of the simulator. The CoV (Coefficient of Variation)
 of the notification delay is assumed to be constant at 70\%, independent of
 the size and occurrence period of the claim.
+
+Of course, the user may wish to sample from a different distribution \code{rfun}
+and/or a different set of parameters. An example is given below.
 }
 \examples{
 n_vector <- c(90, 79, 102, 78, 86, 88, 116, 84, 93, 104)
 
-# Try constant mean/CoV function (i.e. independent of claim size)
-notidel_mean <- function(claim_size, occurrence_period) {2}
-notidel_cv <- function(claim_size, occurrence_period) {0.70}
+# Try a constant Weibull distribution
+# (i.e. independent of claim size and occurrence period)
+notidel_param <- function(claim_size, occurrence_period) {
+  mean <- 2; cv <- 0.70
+  shape <- get_Weibull_parameters(mean, cv)[1, ]
+  scale <- get_Weibull_parameters(mean, cv)[2, ]
+  c(shape = shape, scale = scale)
+}
 
 notidel <- claim_notification(n_vector, claim_size(n_vector),
-                              notidel_mean, notidel_cv)
+                              paramfun = notidel_param)
 notidel[[1]] # show notification for claims originating from period 1
 }

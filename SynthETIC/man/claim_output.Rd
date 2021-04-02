@@ -9,7 +9,8 @@ claim_output(
   payment_time_list,
   payment_size_list,
   aggregate_level = 1,
-  incremental = TRUE
+  incremental = TRUE,
+  future = TRUE
 )
 }
 \arguments{
@@ -26,12 +27,16 @@ a divisor of the total number of periods under consideration (default 1).}
 
 \item{incremental}{logical; if true returns the incremental payment square,
 else returns the cumulative payment square.}
+
+\item{future}{logical; if true shows the full claim triangle (i.e. including
+claim payments in future periods), else shows only the past triangle (default
+TRUE).}
 }
 \value{
 An array of claims payments.
 }
 \description{
-Outputs the full square of claim payments by occurrence period and
+Outputs the full (or past) square of claim payments by occurrence period and
 development period. The upper left triangle represents the past, and the
 lower right triangle the unseen future. \cr \cr
 Users can modify the aggregate level by providing an \code{aggregate_level}

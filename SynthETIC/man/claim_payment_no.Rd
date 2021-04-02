@@ -4,30 +4,24 @@
 \alias{claim_payment_no}
 \title{Number of Partial Payments}
 \usage{
-claim_payment_no(
-  frequency_vector,
-  claim_size_list,
-  simulate_no_pmt_function,
-  claim_size_benchmark_1 = 0.0375 * .pkgenv$ref_claim,
-  claim_size_benchmark_2 = 0.075 * .pkgenv$ref_claim
-)
+claim_payment_no(frequency_vector, claim_size_list, rfun, paramfun, ...)
 }
 \arguments{
 \item{frequency_vector}{a vector of claim frequencies for all the periods.}
 
 \item{claim_size_list}{list of claim sizes.}
 
-\item{simulate_no_pmt_function}{a function that generates the number of
-partial payments associated with a particular claim, conditional on
-\code{claim_size} (see Details for the default simulation function).}
+\item{rfun}{optional alternative random sampling function; see Details for
+default.}
 
-\item{claim_size_benchmark_1}{a value below which claims are assumed to be
-settled with 1 or 2 payments, unless an alternative
-\code{simulate_no_pmt_function} is specified (default 0.0375 * \code{ref_claim}).}
+\item{paramfun}{parameters for the random sampling function, as a function of
+\code{claim_size}; see Details.}
 
-\item{claim_size_benchmark_2}{a second criterion below which claims are
-assumed to be settled with 2 or 3 payments, unless an alternative
-\code{simulate_no_pmt_function} is specified (default 0.075 * \code{ref_claim}).}
+\item{...}{other arguments/parameters to be passed onto \code{paramfun}, e.g.
+if going with the default sampling distribution, you can specify a
+\code{claim_size_benchmark_1} (below which claims are assumed to be settled with 1
+or 2 payments) and \code{claim_size_benchmark_2} (below which claims are assumed
+to be settled with 2 or 3 payments).}
 }
 \description{
 Simulates and returns the number of partial payments required to settle each
@@ -38,7 +32,8 @@ Returns a list structure such that the \eqn{i}th component of the
 list gives the number of partial payments required to settle each of the
 claims that occurred in period \eqn{i}. It is assumed that at least one
 payment is required i.e. no claims are settled without any single cash
-payment. \cr \cr
+payment.
+
 Let \eqn{M} represent the number of partial payments associated with a
 particular claim. The default \code{simulate_no_pmt_function} is set up
 such that if \code{claim_size} \eqn{\le} \code{claim_size_benchmark_1},
@@ -48,10 +43,23 @@ such that if \code{claim_size} \eqn{\le} \code{claim_size_benchmark_1},
 if \code{claim_size} > \code{claim_size_benchmark_2}
 then \eqn{M} is geometric with minimum 4 and mean
 \deqn{min(8, 4 + log(claim_size/claim_size_benchmark_2)).}
+
+Alternative sampling distributions are supported through \code{rfun} (the random
+generation function) and \code{paramfun} (which returns the parameters of \code{rfun}
+as a function of \code{claim_size}). The \code{paramfun} should return the distribution
+parameters in a \strong{vector}, e.g. for gamma distribution \code{paramfun} should
+return a value in the format of \code{c(shape = , scale = )}. If a \code{rfun} is
+specified without a \code{paramfun}, \code{SynthETIC} will try to proceed without
+parameterisation (i.e. directly calling \code{rfun} with \code{claim_size}), and if it
+fails, then return an error message.
 }
 \examples{
 n_vector <- claim_frequency(I = 10)
-# with default simulate_no_pmt_function
+# with default simulation function
 no_payments <- claim_payment_no(n_vector, claim_size(n_vector))
 no_payments[[1]] # number of payments for claims incurred in period 1
+
+# modify the lower benchmark value
+claim_payment_no(n_vector, claim_size(n_vector),
+                 claim_size_benchmark_1 = 5000)
 }

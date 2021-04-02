@@ -8,7 +8,9 @@ claim_payment_size(
   frequency_vector,
   claim_size_list,
   no_payments_list,
-  simulate_amt_pmt_function
+  rfun,
+  paramfun,
+  ...
 )
 }
 \arguments{
@@ -18,10 +20,13 @@ claim_payment_size(
 
 \item{no_payments_list}{list of number of partial payments.}
 
-\item{simulate_amt_pmt_function}{a function that generates and returns the
-payment pattern of a particular claim (as a vector of size = \code{no_pmt}),
-conditional on \code{no_pmt} and \code{claim_size} (see Details for the
-default simulation function).}
+\item{rfun}{optional alternative random sampling function; see Details for
+default.}
+
+\item{paramfun}{parameters for the random sampling function, as a function of
+\code{claim_size}; see Details.}
+
+\item{...}{other arguments/parameters to be passed onto \code{paramfun}.}
 }
 \description{
 Simulates and returns the constant dollar amount of each partial payment
@@ -31,30 +36,41 @@ the periods.
 \details{
 Returns a compound list structure such that the \eqn{j}th component
 of the \eqn{i}th sub-list gives the payment pattern (as a vector) for the
-\eqn{j}th claim of occurrence period \eqn{i}. \cr \cr
-The default \code{simulate_amt_pmt_function} is set up in three steps. First
-we sample the \emph{complement} of the porportion of total claim size
+\eqn{j}th claim of occurrence period \eqn{i}.
+
+The default \code{rfun} is set up in three steps. First
+we sample the \strong{complement} of the proportion of total claim size
 represented by the last two payments, from a Beta distribution with mean
 \deqn{1 - min(0.95, 0.75 + 0.04log[claim_size/(0.10 * ref_claim)])} where
 \code{ref_claim} is a package-wise global variable that we ask the user to define
 at the top of their code using \code{\link{set_parameters}}. CoV is assumed
 constant at 20\%.
-\cr \cr
-Next we simulate the porportion of last_two_pmts paid in the second last
+
+Next we simulate the proportion of last_two_pmts paid in the second last
 payment (\emph{settlement of the claim}) from a Beta distribution with
 mean = 0.90 and CoV = 3\%.
-\cr \cr
+
 Lastly we sample the remaining payment proportions from a Beta distribution
 with mean \deqn{(1 - last_two_payments)/(no_pmt - 2)} and CoV = 10\%, which
 is followed by a normalisation such that the proportions add up to 1.
-\cr \cr
+
 In the cases where there are only 2 or 3 partial payments, proceed as if
 there were 4 or 5 payments respectively with last_two_payments = 0. The
 trivial case is when the claim is settled with a single payment, which must
 be of the same amount as the total claim size.
+
+Alternative sampling distributions are supported through \code{rfun} (the random
+generation function) and \code{paramfun} (which returns the parameters of \code{rfun}
+as a function of \code{claim_size}). The \code{paramfun} should return the distribution
+parameters in a \strong{vector}, e.g. for gamma distribution \code{paramfun} should
+return a value in the format of \code{c(shape = , scale = )}. If a \code{rfun} is
+specified without a \code{paramfun}, \code{SynthETIC} will try to proceed without
+parameterisation (i.e. directly calling \code{rfun} with \code{claim_size}), and if it
+fails, then return an error message.
 }
 \section{Explanation}{
- Why did we set up a payment pattern as above? \cr \cr
+ Why did we set up a payment pattern as above?
+
 The payment pattern is set up to reflect the typical pattern of a claim from
 an Auto liability line of business, which usually consists of:
 \enumerate{
@@ -75,16 +91,16 @@ n_vector <- claim_frequency(I = 10)
 claim_sizes <- claim_size(n_vector)
 no_payments <- claim_payment_no(n_vector, claim_sizes)
 
-# with default simulate_amt_pmt_function
+# with default rfun
 payments <- claim_payment_size(n_vector, claim_sizes, no_payments)
 # partial payment sizes for claim 1 of occurrence period 1
 payments[[1]][[1]]
 
-# with some custom simulate_amt_pmt_function
-# simplest case: (stochastically) equal amounts
-my_func <- function(no_pmt, claim_size) {
-  prop <- runif(no_pmt)
-  prop <- prop/sum(prop)
+# with some custom rfun
+# simplistic case: (stochastically) equal amounts
+my_func <- function(n, claim_size) {
+  prop <- runif(n)
+  prop <- prop / sum(prop)
   claim_size * prop
 }
 mypayments <- claim_payment_size(n_vector, claim_sizes, no_payments, my_func)

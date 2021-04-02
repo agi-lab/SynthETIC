@@ -4,7 +4,7 @@
 
 #' Loss Reserving Output
 #'
-#' Outputs the full square of claim payments by occurrence period and
+#' Outputs the full (or past) square of claim payments by occurrence period and
 #' development period. The upper left triangle represents the past, and the
 #' lower right triangle the unseen future. \cr \cr
 #' Users can modify the aggregate level by providing an `aggregate_level`
@@ -21,6 +21,9 @@
 #' a divisor of the total number of periods under consideration (default 1).
 #' @param incremental logical; if true returns the incremental payment square,
 #' else returns the cumulative payment square.
+#' @param future logical; if true shows the full claim triangle (i.e. including
+#' claim payments in future periods), else shows only the past triangle (default
+#' TRUE).
 #' @return An array of claims payments.
 #' @details
 #' **Remark on out-of-bound payment times**: This function includes adjustment
@@ -42,7 +45,8 @@ claim_output <- function(
   payment_time_list,
   payment_size_list,
   aggregate_level = 1,
-  incremental = TRUE) {
+  incremental = TRUE,
+  future = TRUE) {
 
   I <- length(frequency_vector)
   output_incremental <- array(0, c(I, I))
@@ -74,8 +78,8 @@ claim_output <- function(
 
   if (aggregate_level != 1) {
     # if aggregate at a higher level, sum together the values in individual squares
-    # imagine dividing up a 40 x 40 sqaure into 100 squares of size 4 x 4 to sum
-    # quarterly data at a yearly level
+    # imagine dividing up a 40 x 40 square into 100 squares of size 4 x 4 to sum
+    # quarterly data at a yearly level (but in a zig-zag fashion)
     new_side_length <- I / aggregate_level
     output_incremental_orig <- output_incremental
     output_incremental <- array(0, c(new_side_length, new_side_length))
@@ -83,20 +87,50 @@ claim_output <- function(
       side_occurrence <- (aggregate_level*(i-1) + 1): (aggregate_level*i)
       for (j in 1:new_side_length) {
         side_development <- (aggregate_level*(j-1) + 1) : (aggregate_level*j)
-        square <- output_incremental_orig[side_occurrence, side_development]
-        output_incremental[i, j] <- sum(square)
+        square_curr <- output_incremental_orig[side_occurrence, side_development]
+        select <- apply(upper.tri(square_curr, diag = TRUE), 1, rev)
+        if (j == 1) {
+          output_incremental[i, j] <- sum(square_curr[select])
+        } else {
+          square_prev <- output_incremental_orig[
+            side_occurrence, side_development - aggregate_level]
+          output_incremental[i, j] <- sum(square_curr[select]) +
+            sum(square_prev[!select])
+        }
       }
     }
   }
 
   if (incremental == TRUE) {
-    output_incremental
+    if (future == TRUE) {
+      output_incremental
+    } else {
+      # only to show the past triangle
+      side <- nrow(output_incremental)
+      past_incremental <- array(NA, c(side, side))
+      indicator <- apply(upper.tri(output_incremental, diag = TRUE), 1, rev)
+      for (i in 1:side) {
+        past_incremental[i, 1:sum(indicator[i, ])] <- output_incremental[i, indicator[i, ]]
+      }
+      past_incremental
+    }
   } else {
     output_cumulative <- output_incremental
     for (i in 1:dim(output_incremental)[1]) {
       output_cumulative[i, ] <- cumsum(output_incremental[i, ])
     }
-    output_cumulative
+    if (future == TRUE) {
+      output_cumulative
+    } else {
+      # only to show the past triangle
+      side <- nrow(output_cumulative)
+      past_cumulative <- array(NA, c(side, side))
+      indicator <- apply(upper.tri(output_cumulative, diag = TRUE), 1, rev)
+      for (i in 1:side) {
+        past_cumulative[i, 1:sum(indicator[i, ])] <- output_cumulative[i, indicator[i, ]]
+      }
+      past_cumulative
+    }
   }
 
 }

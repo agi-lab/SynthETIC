@@ -9,8 +9,9 @@ claim_payment_delay(
   claim_size_list,
   no_payments_list,
   settlement_list,
-  settlement_mean_function,
-  simulate_delay_function
+  rfun,
+  paramfun,
+  ...
 )
 }
 \arguments{
@@ -22,15 +23,13 @@ claim_payment_delay(
 
 \item{settlement_list}{list of settlement delays.}
 
-\item{settlement_mean_function}{target mean of the settlement delay
-as a function of \code{claim_size} and \code{occurrence_period} (see the
-documentation of \code{claim_closure} for more details).}
+\item{rfun}{optional alternative random sampling function; see Details for
+default.}
 
-\item{simulate_delay_function}{a function that generates the payment delay
-pattern of a particular claim (as a vector of size = \code{no_pmt}), taking
-as input \code{no_pmt}, \code{claim_size}, \code{setldel},
-\code{occurrence_period}, and \code{setldel_mean_function} (see Details
-for the default simulation algorithm).}
+\item{paramfun}{parameters for the random sampling function, as a function of
+\code{claim_size}, \code{setldel}; see Details.}
+
+\item{...}{other arguments/parameters to be passed onto \code{paramfun}.}
 }
 \description{
 Simulates and returns the inter-partial delays (i.e. the delay of one
@@ -40,19 +39,19 @@ claims occurring in each of the periods.
 \details{
 Returns a compound list structure such that the \eqn{j}th component
 of the \eqn{i}th sub-list gives the payment delay pattern (as a vector) for
-the \eqn{j}th claim of occurrence period \eqn{i}. \cr \cr
-The default \code{simulate_delay_function} is split into 2 cases. \cr \cr
+the \eqn{j}th claim of occurrence period \eqn{i}.
+
+The default \code{rfun} is split into 2 cases.
+
 \strong{Case 1: claims with at least 4 partial payments.} The simulation takes
-2 steps. \cr
+2 steps.
 First we sample the last payment delay from a Weibull distribution with
 mean = 1 quarter (automatically converted to the relevant \code{time_unit}, a
 global variable that the user is required to define at the top of their code)
-and CoV = 20\%. Then we sample the remaining payment delays
-from a second Weibull distribution with CoV at 35\% and
-\deqn{mean = settlement_mean_function(claim_size, occurrence_period)/no_pmt}
-where \code{settlement_mean_function()} is the function that
-we used in \code{claim_closure} to generate the settlement delays.
-\cr \cr
+and CoV = 20\%. Then we sample the remaining payment delays from a second
+Weibull distribution with CoV at 35\% and mean = target mean settlement delay
+(see \code{\link{claim_closure}}) divided by the number of payments.
+
 \strong{Case 2: claims with less than 4 partial payments.} Proceed as in Case 1
 but without separating out the simulation of the last payment delay (i.e.
 ignore step 1).
@@ -67,4 +66,16 @@ setldel <- claim_closure(n_vector, claim_sizes)
 # with default setting
 pmtdel <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel)
 pmtdel[[1]][[1]] # payment delays for claim 1 of occurrence period 1
+
+# with some custom rfun
+# simplistic case: payments times are uniformly distributed
+my_func <- function(n, setldel) {
+  prop <- runif(n)
+  prop <- prop / sum(prop)
+  setldel * prop
+}
+mypayments <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel,
+                                  rfun = my_func)
+# inter-partial delays for claim 1 of occurrence period 1
+mypayments[[1]][[1]]
 }

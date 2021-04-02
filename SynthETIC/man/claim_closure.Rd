@@ -4,20 +4,20 @@
 \alias{claim_closure}
 \title{Claim Closure}
 \usage{
-claim_closure(frequency_vector, claim_size_list, mean_function, cv_function)
+claim_closure(frequency_vector, claim_size_list, rfun, paramfun, ...)
 }
 \arguments{
 \item{frequency_vector}{a vector of claim frequencies for all the periods.}
 
 \item{claim_size_list}{list of claim sizes.}
 
-\item{mean_function}{target mean of the Weibull distribution as a function
-of \code{claim_size} and \code{occurrence_period} (see Details for default
-mean function).}
+\item{rfun}{optional alternative random sampling function; if not specified,
+assumes Weibull.}
 
-\item{cv_function}{target CoV of the Weibull distribution as a function of
-\code{claim_size} and \code{occurrence_period} (see Details for default
-CoV function).}
+\item{paramfun}{parameters for the random sampling function, as a function of
+\code{claim_size} and \code{occurrence_period}; see Details.}
+
+\item{...}{other arguments/parameters to be passed onto \code{paramfun}.}
 }
 \value{
 A list of settlement delays such that the \eqn{i}th component of
@@ -31,35 +31,52 @@ occurring in each of the periods, assuming a Weibull distribution.
 \details{
 Claim settlement delay represents the delay from claim notification
 to closure. The epoch of closure is the sum of occurrence time, notification
-delay and settlement delay. \cr \cr
-It is assumed that the settlement delay follows a Weibull distribution with
-parameters possibly dependent on claim size and occurrence period. \cr \cr
-Recall that \code{ref_claim} is a packagewise-global variable that user is
-required to define by \code{\link{set_parameters}}. By default, we assume
-that mean settlement delay (in quarters, but automatically converted to the
+delay and settlement delay.
+
+By default, it is assumed that the settlement delay follows a Weibull
+distribution. The default Weibull parameters have been set up such that
+the mean settlement delay (in quarters, but automatically converted to the
 relevant \code{time_unit} as defined in \code{\link{set_parameters}}) is
 porportional to
-\deqn{min(25, max(1, 6 + 4 log[claim_size/(0.10 * ref_claim)]))} up to a
-scaling factor "\eqn{a}", which is dependent on \code{occurrence_perid}.
-Specifically, \deqn{a = min(0.85, 0.65 + 0.02 * (occurrence_period - 21))} if
+\deqn{min(25, max(1, 6 + 4 log[claim_size/(0.10 * ref_claim)]))} (where
+\code{ref_claim} is a packagewise-global variable that user is required to define
+by \code{\link{set_parameters}}) up to a scaling factor "\eqn{a}", which is
+dependent on \code{occurrence_perid}. Specifically,
+\deqn{a = min(0.85, 0.65 + 0.02 * (occurrence_period - 21))} if
 \code{claim_size} < (0.10 * ref_claim) and \code{occurrence_period} \eqn{\ge}
 21, and \deqn{a = max(0.85, 1 - 0.0075 * occurrence_period)} otherwise.
 The CoV of the settlement delay is constant at 60\%, independent of the size
-and occurrence period of the claim. \cr \cr
+and occurrence period of the claim.
+
 Note that this function can create out-of-bound settlement dates. In these
 cases, the simulated epoch of occurrence of the transaction is maintained
 throughout the simulation of details of the claim concerned. Adjustments will
 only be made for the tabulation of results in \code{\link{claim_output}} and
 payment inflation.
+
+Of course, like any other \code{SynthETIC} modules, the user may wish to
+sample from a different distribution \code{rfun} and/or a different set of
+parameters. The \code{paramfun} should return the distribution parameters in a
+\strong{vector}, e.g. for gamma distribution \code{paramfun} should return a value in
+the format of \code{c(shape = , scale = )}, for exponential distribution this
+should return \code{c(rate = )}. See Examples. If a \code{rfun} is specified without
+a \code{paramfun}, \code{SynthETIC} will try to proceed without parameterisation (i.e.
+directly calling \code{rfun} with claim size and occurrence period), and if it
+fails, then return an error message.
 }
 \examples{
 n_vector <- c(90, 79, 102, 78, 86, 88, 116, 84, 93, 104)
 
-# Try constant mean/CoV function (i.e. independent of claim size)
-setldel_mean <- function(claim_size, occurrence_period) {10}
-setldel_cv <- function(claim_size, occurrence_period) {0.70}
+# Try a constant Weibull distribution
+# (i.e. independent of claim size and occurrence period)
+setldel_param <- function(claim_size, occurrence_period) {
+  mean <- 10; cv <- 0.70
+  shape <- get_Weibull_parameters(mean, cv)[1, ]
+  scale <- get_Weibull_parameters(mean, cv)[2, ]
+  c(shape = shape, scale = scale)
+}
 
 setldel <- claim_closure(n_vector, claim_size(n_vector),
-                         setldel_mean, setldel_cv)
+                         paramfun = setldel_param)
 setldel[[1]] # show settlement delay of claims originating from period 1
 }

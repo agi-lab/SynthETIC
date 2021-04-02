@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette aims to illustrate how the `SynthETIC` package can be used to generate a general insurance claims history with realistic distributional assumptions consistent with the experience of a specific (but anonymous) Auto Liability portfolio. The simulator is composed of 8 modelling steps (or modules), each of which will build on (a selection of) the output from previous steps:
+This vignette aims to illustrate how the `SynthETIC` package can be used to generate a general insurance claims history with realistic distributional assumptions consistent with the experience of a specific (but anonymous) Auto Liability portfolio. The simulator is composed of 8 modelling steps (or "modules"), each of which will build on (a selection of) the output from previous steps:
 
 1. [*Claim occurrence*](#occurrence): claim frequency, claim occurrence times
 2. [*Claim size*](#size): claim size in constant dollar values i.e. without inflation
@@ -98,11 +98,11 @@ Module                          Details
                                 relevant `time_unit`) i.e. the mean notification
                                 delay decreases logarithmically with claim 
                                 size. It has maximum value 3 and equals 2 for a 
-                                claim of size exactly at `0.5*ref_claim`.
+                                claim of size exactly at `0.5 * ref_claim`.
 
 4. Claim Closure                The default value for the mean settlement delay 
                                 involves a term that defines the benchmark for
-                                a claim to be considered "small": `0.1*ref_claim`.
+                                a claim to be considered "small": `0.1 * ref_claim`.
                                 The default mean settlement delay increases 
                                 logarithmically with claim size and equals 6
                                 exactly at this benchmark. Furthermore there was 
@@ -110,20 +110,21 @@ Module                          Details
                                 mean function, that impacted the settlement 
                                 delays of those "small" claims.
                                 
-5. Claim Payment Count          We need two claim size benchmarks as we sample
-                                from different distributions for claims of
+5. Claim Payment Count          For the default sampling distribution, we need 
+                                two claim size benchmarks as we sample from
+                                different distributions for claims of
                                 different sizes. In general a small number of
                                 partial payments is required to settle small
                                 claims, and additional payments will be required
                                 to settle more extreme claims. <br>
-                                It is assumed that claims below `0.0375*ref_claim`
+                                It is assumed that claims below `0.0375 * ref_claim`
                                 can be settled in 1 or 2 payments, claims between
-                                `0.075*ref_claim` in 2 or 3 payments, and claims
-                                beyond `0.075*ref_claim` in no less than 4
+                                `0.075 * ref_claim` in 2 or 3 payments, and claims
+                                beyond `0.075 * ref_claim` in no less than 4
                                 payments.
 
 6. Claim Payment Size           We use the same proportion of `ref_claim` as in
-                                the *Claim Closure* module, namely `0.1*ref_claim`.
+                                the *Claim Closure* module, namely `0.1 * ref_claim`.
                                 This benchmark value is used when simulating the
                                 proportion of the last two payments in the default
                                 `simulate_amt_pmt` function. <br>
@@ -136,7 +137,7 @@ Module                          Details
                                 payment functions. <br>
                                 1) A legislative change, captured by SI occurrence,
                                 reduced claim size by up to 40% for the smallest
-                                claims and impacted claims up to `0.25*ref_claim`
+                                claims and impacted claims up to `0.25 * ref_claim`
                                 in size. <br>
                                 2) The default SI payment is set to be 30% p.a.
                                 for the smallest claims and zero for claims 
@@ -154,6 +155,13 @@ The `time_unit` chosen will impact the time-related modules, specifically
 
 1. Claim Occurrence {#occurrence}
 ---
+Unless otherwise specified, `claim_frequency()` assumes the claim frequency follows a Poisson distribution with mean equal to the product of exposure `E` associated with period $i$ and expected claim frequency `freq` per unit exposure for that period. The exposure and expected frequency are allowed to vary across periods, but not within a period.
+
+Given the claim frequency, `claim_occurrence()` samples the occurrence times of each claim from a uniform distribution. Together, the two functions assume **by default** that the arrival of claims follows a Poisson process, with potentially varying rates across different periods (see [Example 1.2](#ex1.2)).
+
+Alternative sampling processes are discussed in [Example 1.3](#ex1.3) and [1.4](#ex1.4).
+
+## Example 1.1: Constant exposure and frequency {#ex1.1}
 ### Input parameters
 * `years` = number of years considered
   * `I` = number of claims development periods considered (which equals the number of years divided by the `time_unit`)
@@ -169,28 +177,120 @@ lambda <- c(rep(0.03, I))
 
 ### Implementation and Output
 ```{r}
-# Number of claims ocurring for each period i
+# Number of claims occurring for each period i
 # shorter equivalent code:
 # n_vector <- claim_frequency()
-n_vector <- claim_frequency(I, E, lambda)
+n_vector <- claim_frequency(I = I, E = E, freq = lambda)
 n_vector
 
 # Occurrence time of each claim r, for each period i
-occurrence_times <- claim_occurrence(n_vector)
+occurrence_times <- claim_occurrence(frequency_vector = n_vector)
 occurrence_times[[1]]
+```
+
+## Example 1.2: Increasing exposure, constant frequency per unit of exposure {#ex1.2}
+Note that variables named with `_tmp` are for illustration purposes only and not used in the later simulation modules of this demo.
+
+```{r}
+## input parameters
+years_tmp <- 10
+I_tmp <- years_tmp / time_unit
+# set linearly increasing exposure, ...
+E_tmp <- c(rep(12000, I)) + seq(from = 0, by = 100, length = I)
+# and constant frequency per unit of exposure
+lambda_tmp <- c(rep(0.03, I))
+
+## output
+# Number of claims occurring for each period i
+n_vector_tmp <- claim_frequency(I = I_tmp, E = E_tmp, freq = lambda_tmp)
+n_vector_tmp
+
+# Occurrence time of each claim r, for each period i
+occurrence_times_tmp <- claim_occurrence(frequency_vector = n_vector_tmp)
+occurrence_times_tmp[[1]]
+```
+
+## Example 1.3: Alternative claim frequency distribution {#ex1.3}
+Users can choose to specify their own claim frequency distribution via `simfun`, which takes both random generation functions (`type = "r"`, the default) and cumulative distribution functions (`type = "p"`). For example, we can use the negative binomial distribution in base `R`, or the zero-truncated Poisson distribution from the `actuar` package.
+
+```{r}
+# simulate claim frequencies from negative binomial
+# 1. using type-"r" specification (default)
+claim_frequency(I = I, simfun = rnbinom, size = 100, mu = 100)
+# 2. using type-"p" specification, equivalent to above
+claim_frequency(I = I, simfun = pnbinom, type = "p", size = 100, mu = 100)
+
+# simulate claim frequencies from zero-truncated Poisson
+claim_frequency(I = I, simfun = actuar::rztpois, lambda = 90)
+claim_frequency(I = I, simfun = actuar::pztpois, type = "p", lambda = 90)
+```
+Similar to [Example 1.2](#ex1.2), we can modify the frequency parameters to vary across periods:
+
+```{r}
+claim_frequency(I = I, simfun = actuar::rztpois, lambda = time_unit * E_tmp * lambda_tmp)
+```
+
+If one wishes to code their own sampling function (either a direct random generating function, or a proper CDF), this can be achieved by:
+
+```{r dpi=150, fig.width=7, fig.height=4, out.width=650}
+# sampling from non-homogeneous Poisson process
+rnhpp.count <- function(no_periods) {
+  rate <- 3000
+  intensity <- function(x) {
+    # e.g. cyclical Poisson process
+    0.03 * (sin(x * pi / 2) / 4 + 1)
+  }
+  claim_times <- poisson::nhpp.event.times(rate, no_periods * rate * 2, intensity)
+  
+  as.numeric(table(cut(claim_times, breaks = 0:no_periods)))
+}
+
+n_vector_tmp <- claim_frequency(I = I, simfun = rnhpp.count)
+plot(x = 1:I, y = n_vector_tmp, type = "l",
+     main = "Claim frequency simulated from a cyclical Poisson process",
+     xlab = "Occurrence period", ylab = "# Claims")
+```
+
+## Example 1.4: Alternative specification of the claim arrival process {#ex1.4}
+We note that the `claim_occurrence()` function for simulating the claim times conditional on claim frequencies assumes a uniform distribution, and that this cannot be modified without changing the module. Indeed, the modular structure of `SynthETIC` ensures that one can easily unplug any one module and replace it with a version modified to his/her own purpose.
+
+For example, if one wishes to replace this uniform distribution assumption and/or the whole [Claim Occurrence](#occurrence) module, they can simply supply their own vector of claim times and easily convert to the list format consistent with the `SynthETIC` framework for smooth integration with the later modules.
+
+Recall the example of non-homogeneous Poisson process from [1.3](#ex1.3):
+
+```{r}
+rate_tmp <- 3000
+intensity_tmp <- function(x) {
+  # e.g. cyclical Poisson process
+  0.03 * (sin(x * pi / 2) / 4 + 1)
+}
+x_tmp <- poisson::nhpp.event.times(rate_tmp, I * rate_tmp, intensity_tmp)
+event_times_tmp <- x_tmp[x_tmp <= I]
+
+# Number of claims occurring for each period i
+# by counting the number of event times in each interval (i, i + 1)
+n_vector_tmp <- as.numeric(table(cut(event_times_tmp, breaks = 0:I)))
+n_vector_tmp
+
+# Occurrence time of each claim r, for each period i
+occurrence_times_tmp <- to_SynthETIC(x = event_times_tmp, 
+                                     frequency_vector = n_vector_tmp)
+occurrence_times_tmp[[1]]
 ```
 
 
 2. Claim Size {#size}
 ---
+
+## Example 2.1: Default power normal {#ex2.1}
+By default `claim_size()` assumes a left truncated power normal distribution: $S^{0.2} \sim \mathcal{N}(\mu = 9.5, \sigma = 3)$, left truncated at 30. **There is no need to specify a sampling distribution if the user is happy with the default power normal.** This example is mainly to demonstrate how the default function works.
+
 ### Input parameters
-* `S_df` = cdf used to generate claim size, $S$
+We can specify the CDF to generate claim sizes from. The default distribution function can be coded as follows:
 
 ```{r}
-# In this version we used a power normal S^0.2 ~ N(9.5, 3), left truncated at 30
-# This is the default distribution of S in the claim_size() function
-# If user wants to use a predefined distribution, S_df can be defined as its corresponding p function
-# e.g. S_df <- function(s){pweibull(s, shape = , scale = )}
+# use a power normal S^0.2 ~ N(9.5, 3), left truncated at 30
+# this is the default distribution driving the claim_size() function
 S_df <- function(s) {
   # truncate and rescale
   if (s < 30) {
@@ -205,115 +305,366 @@ S_df <- function(s) {
 
 ### Implementation and Output
 ```{r}
-# shorter equivalent code (and will be more efficient too as it avoids inverse transform):
-# claim_sizes <- claim_size(n_vector)
-claim_sizes <- claim_size(n_vector, S_df, range = c(0, 1e24))
+# shorter equivalent: claim_sizes <- claim_size(frequency_vector = n_vector)
+claim_sizes <- claim_size(frequency_vector = n_vector, 
+                          simfun = S_df, type = "p", range = c(0, 1e24))
 claim_sizes[[1]]
 ```
 
+## Example 2.2: Alternative claim size distribution {#ex2.2}
+Users can also choose any other individual claim size distribution, e.g. Weibull from base `R` or inverse Gaussian from `actuar`:
+
+```{r dpi=150, fig.width=7, fig.height=4, out.width=650}
+## weibull
+# estimate the weibull parameters to achieve the mean and cv matching that of
+# the built-in test claim dataset
+claim_size_mean <- mean(test_claim_dataset$claim_size)
+claim_size_cv <- cv(test_claim_dataset$claim_size)
+weibull_shape <- get_Weibull_parameters(target_mean = claim_size_mean, 
+                                        target_cv = claim_size_cv)[1]
+weibull_scale <- get_Weibull_parameters(target_mean = claim_size_mean, 
+                                        target_cv = claim_size_cv)[2]
+# simulate claim sizes with the estimated parameters
+claim_sizes_weibull <- claim_size(frequency_vector = n_vector,
+                                  simfun = rweibull, 
+                                  shape = weibull_shape, scale = weibull_scale)
+# plot empirical CDF
+plot(ecdf(unlist(test_claim_dataset$claim_size)), xlim = c(0, 2000000),
+     main = "Empirical distribution of simulated claim sizes",
+     xlab = "Individual claim size")
+plot(ecdf(unlist(claim_sizes_weibull)), add = TRUE, col = 2)
+
+
+## inverse Gaussian
+# modify actuar::rinvgauss (left truncate it @30 and right censor it @5,000,000)
+rinvgauss_censored <- function(n) {
+  s <- actuar::rinvgauss(n, mean = 180000, dispersion = 0.5e-5)
+  while (any(s < 30 | s > 5000000)) {
+    for (j in which(s < 30 | s > 5000000)) {
+      # for rejected values, resample
+      s[j] <- actuar::rinvgauss(1, mean = 180000, dispersion = 0.5e-5)
+    }
+  }
+  s
+}
+# simulate from the modified inverse Gaussian distribution
+claim_sizes_invgauss <- claim_size(frequency_vector = n_vector, simfun = rinvgauss_censored)
+
+# plot empirical CDF
+plot(ecdf(unlist(claim_sizes_invgauss)), add = TRUE, col = 3)
+legend.text <- c("Power normal", "Weibull", "Inverse Gaussian")
+legend("bottomright", legend.text, col = 1:3, lty = 1, bty = "n")
+```
+
+## Example 2.3: Simulating claim sizes from covariates
+The applications discussed above assume that the claim sizes are sampled from a single distribution for all policyholders (e.g. the default power normal, custom sampling distribution specified by `simfun`).
+
+Suppose we instead want to simulate from a model which uses covariates to predict claim sizes. For example, consider a (theoretical) gamma GLM with log link:
+
+\[
+\begin{align*}
+E(S_i) =\mu_i &=\exp(\boldsymbol{x}_i^\top \boldsymbol\beta)\\
+&= \exp(\beta_0 + \beta_1 \times age_i + \beta_2 \times age_i^2)\\
+&= \exp(27 - 0.768 \times age_i + 0.008 \times age_i^2)
+\end{align*}
+\]
+
+```{r dpi=150, fig.width=7, fig.height=4, out.width=650}
+# define the random generation function to simulate from the gamma GLM
+sim_GLM <- function(n) {
+  # simulate covariates
+  age <- sample(20:70, size = n, replace = T)
+  mu <- exp(27 - 0.768 * age + 0.008 * age^2)
+  rgamma(n, shape = 10, scale = mu / 10)
+}
+
+claim_sizes_GLM <- claim_size(frequency_vector = n_vector, simfun = sim_GLM)
+plot(ecdf(unlist(claim_sizes_GLM)), xlim = c(0, 2000000),
+     main = "Empirical distribution of claim sizes simulated from GLM",
+     xlab = "Individual claim size")
+```
+
+## Example 2.4: Bootstrapping from given loss data {#ex2.4}
+Suppose we have an existing dataset of claim costs at hand that we wish to simulate from, e.g. `ausautoBI8999` (an automobile bodily injury claim dataset in Australia) from [`CASDatasets`](http://cas.uqam.ca). We can take a bootstrap resample of the dataset and then convert to `SynthETIC` format with ease:
+
+```{r eval=FALSE}
+# install.packages("CASdatasets", repos = "http://cas.uqam.ca/pub/", type = "source")
+library(CASdatasets)
+data("ausautoBI8999")
+boot <- sample(ausautoBI8999$AggClaim, size = sum(n_vector), replace = TRUE)
+claim_sizes_bootstrap <- to_SynthETIC(boot, frequency_vector = n_vector)
+```
+
+Another way to code this would be to write a random generation function to perform bootstrapping, and then use `claim_size` as usual:
+```{r eval=FALSE}
+sim_boot <- function(n) {
+  sample(ausautoBI8999$AggClaim, size = n, replace = TRUE)
+}
+claim_sizes_bootstrap <- claim_size(frequency_vector = n_vector, simfun = sim_boot)
+```
+
+Alternatively, one can easily fit a parametric distribution to an existing dataset with the help of the `fitdistrplus` package and then simulate from the fitted parametric distribution ([Example 2.2](#ex2.2)).
 
 3. Claim Notification {#notification}
 ---
-### Input parameters
-It is assumed that the notification delay of a claim follows a Weibull distribution, conditional on the size of the claim and/or period of occurrence. Required inputs are:
 
-* `notidel_mean` = target mean for the Weibull distribution, as a function of `claim_size` and `occurrence_period`
-* `notidel_cv` = target CoV for the Weibull distribution, as a function of `claim_size` and `occurrence_period`
+`SynthETIC` assumes the (removable) dependence of notification delay on claim size and occurrence period of the claim, and thus requires the user to specify a `paramfun` (*param*eter *fun*ction) with arguments `claim_size` and `occurrence_period` (and possibly more, see [Example 3.2](#ex3.2)). The dependencies **can be removed** if the arguments are not referenced inside the function; e.g. the default notification delay function (shown [below](#ex3.1)) is independent of the individual claim's `occurrence_period`.
+
+Other than this pre-specified dependence structure, users are free to choose *any* distribution, whether it be a pre-defined distribution in `R`, or more advanced ones from packages, or a proper user-defined function, to better match their own claim experience.
+
+Indeed, although not recommended, users are able to **add further dependencies** in their simulation. This is illustrated in [Example 4.2](#ex4.2) of the settlement delay module.
+
+## Example 3.1: Default Weibull {#ex3.1}
+By default, `SynthETIC` samples notification delays from a Weibull distribution:
 
 ```{r}
-notidel_mean <- function(claim_size, occurrence_period) {
-  # WARNING: Do not change function arguments
-  min(3, max(1, 2-(log(claim_size/(0.50 * ref_claim)))/3))/4 / time_unit
+## input
+# specify the Weibull parameters as a function of claim_size and occurrence_period
+notidel_param <- function(claim_size, occurrence_period) {
+  # NOTE: users may add to, but not remove these two arguments (claim_size, 
+  # occurrence_period) as they are part of SynthETIC's internal structure
+  
+  # specify the target mean and target coefficient of variation
+  target_mean <- min(3, max(1, 2-(log(claim_size/(0.50 * ref_claim)))/3))/4 / time_unit
+  target_cv <- 0.70
+  # convert to Weibull parameters
+  shape <- get_Weibull_parameters(target_mean, target_cv)[1]
+  scale <- get_Weibull_parameters(target_mean, target_cv)[2]
+  
+  c(shape = shape, scale = scale)
 }
 
-notidel_cv <- function(claim_size, occurrence_period) {
-  # WARNING: Do not change function arguments
-  0.70
+## output
+notidel <- claim_notification(n_vector, claim_sizes, 
+                              rfun = rweibull, paramfun = notidel_param)
+```
+
+## Example 3.2: Alternative distribution for notification delay {#ex3.2}
+`SynthETIC` does not restrict the choice of the sampling distribution. For example, we can use a transformed gamma distribution:
+
+```{r dpi=150, fig.width=7, fig.height=4, out.width=650}
+## input
+# specify the transformed gamma parameters as a function of claim_size and occurrence_period
+trgamma_param <- function(claim_size, occurrence_period, rate) {
+  c(shape1 = max(1, claim_size / ref_claim),
+    shape2 = 1 - occurrence_period / 200,
+    rate = rate)
+}
+
+## output
+# simulate notification delays from the transformed gamma
+notidel_trgamma <- claim_notification(n_vector, claim_sizes, 
+                                      rfun = actuar::rtrgamma, 
+                                      paramfun = trgamma_param, rate = 2)
+
+# graphically compare the result with the default Weibull distribution
+plot(ecdf(unlist(notidel)), xlim = c(0, 15),
+     main = "Empirical distribution of simulated notification delays",
+     xlab = "Notification delay (in quarters)")
+plot(ecdf(unlist(notidel_trgamma)), add = TRUE, col = 2)
+legend.text <- c("Weibull (default)", "Transformed gamma")
+legend("bottomright", legend.text, col = 1:2, lty = 1, bty = "n")
+```
+
+Clearly the transformed gamma with the parameters specified above accelerates the reporting of the simulated claims.
+
+## Example 3.3: User-defined sampling function for notification delay {#ex3.3}
+One may wish to simulate from a more exotic sampling distribution that cannot be easily written as a nice pre-defined distribution function and its parameters. For example, consider a mixed distribution:
+
+```{r}
+rmixed_notidel <- function(n, claim_size) {
+  # consider a mixture distribution
+  # equal probability of sampling from x (Weibull) or y (transformed gamma)
+  x_selected <- sample(c(T, F), size = n, replace = TRUE)
+  x <- rweibull(n, shape = 2, scale = 1)
+  y <- actuar::rtrgamma(n, shape1 = min(1, claim_size / ref_claim), shape2 = 0.8, rate = 2)
+  result <- length(n)
+  result[x_selected] <- x[x_selected]; result[!x_selected] <- y[!x_selected]
+  
+  return(result)
 }
 ```
 
-### Implementation and Output
+In this case, we can consider `claim_size` as the "parameter" for the sampling distribution (just in the same way as `shape` and `scale` for gamma distribution). Then we can either define a parameter function like below:
+
 ```{r}
-# shorter equivalent code:
-# notidel <- claim_notification(n_vector, claim_sizes)
-notidel <- claim_notification(n_vector, claim_sizes, notidel_mean, notidel_cv)
-notidel[[1]]
+rmixed_params <- function(claim_size, occurrence_period) {
+  # claim_size is the only "parameter" required for rmixed_notidel
+  c(claim_size = claim_size)
+}
+```
+
+or simply run
+
+```{r}
+notidel_mixed <- claim_notification(n_vector, claim_sizes, rfun = rmixed_notidel)
+```
+
+which would give the same result as
+
+```{r}
+notidel_mixed <- claim_notification(n_vector, claim_sizes, 
+                                    rfun = rmixed_notidel, paramfun = rmixed_params)
 ```
 
 
 4. Claim Closure {#closure}
 ---
-### Input parameters
-It is assumed that the settlement delay of a claim also follows a Weibull distribution, conditional on the size of the claim and/or period of occurrence. Required inputs are:
 
-* `setldel_mean` = target mean for the Weibull distribution, as a function of `claim_size` and `occurrence_period`
-* `setldel_cv` = target CoV for the Weibull distribution, as a function of `claim_size` and `occurrence_period`
+Claim settlement delay represents the delay from claim notification to closure. Like [notification delay](#notification), `SynthETIC` assumes the ([removable](#notification)) dependence of settlement delay on claim size and occurrence period of the claim, and thus requires the user to specify a `paramfun` (*param*eter *fun*ction) with arguments `claim_size` and `occurrence_period` (and possibly more, see [Example 3.2](#ex3.2)).
+
+Other than this pre-specified dependence structure, users are free to choose *any* distribution by specifying their own `rfun` and/or `paramfun` (see `?claim_closure`).
+
+Indeed, although not recommended, users are able to add further dependencies in their simulation. This is illustrated in [Example 4.2](#ex4.2).
+
+## Example 4.1: Default Weibull {#ex4.1}
+Below we show the default implementation with a Weibull distribution.
 
 ```{r}
-setldel_mean <- function(claim_size, occurrence_period) {
-  # WARNING: Do not change function arguments
+## input
+# specify the Weibull parameters as a function of claim_size and occurrence_period
+setldel_param <- function(claim_size, occurrence_period) {
+  # NOTE: users may add to, but not remove these two arguments (claim_size, 
+  # occurrence_period) as they are part of SynthETIC's internal structure
+  
+  # specify the target Weibull mean
   if (claim_size < (0.10 * ref_claim) & occurrence_period >= 21) {
     a <- min(0.85, 0.65 + 0.02 * (occurrence_period - 21))
   } else {
     a <- max(0.85, 1 - 0.0075 * occurrence_period)
   }
-  
   mean_quarter <- a * min(25, max(1, 6 + 4*log(claim_size/(0.10 * ref_claim))))
-  return(mean_quarter / 4 / time_unit)
+  target_mean <- mean_quarter / 4 / time_unit
+  
+  # specify the target Weibull coefficient of variation
+  target_cv <- 0.60
+
+  c(shape = get_Weibull_parameters(target_mean, target_cv)[1, ],
+    scale = get_Weibull_parameters(target_mean, target_cv)[2, ])
 }
 
-setldel_cv <- function(claim_size, occurrence_period) {
-  # WARNING: Do not change function arguments
-  0.60
+## output
+# simulate the settlement delays from the Weibull with parameters above
+setldel <- claim_closure(n_vector, claim_sizes, rfun = rweibull, paramfun = setldel_param)
+setldel[[1]]
+```
+
+**There is no need to specify a sampling distribution if one is happy with the default Weibull specification.** This example is just to demonstrate some of the behind-the-scenes work of the default implementation, and at the same time, to show how one may specify and input a random sampling distribution of their choosing.
+
+## Example 4.2: Additional dependencies {#ex4.2}
+Suppose we would like to add the dependence of settlement delay on notification delay, which is not natively included in `SynthETIC` default setting. For example, let's consider the following parameter function:
+
+```{r}
+## input
+# an extended parameter function for the simulation of settlement delays
+setldel_param_extd <- function(claim_size, occurrence_period, notidel) {
+  
+  # specify the target Weibull mean
+  if (claim_size < (0.10 * ref_claim) & occurrence_period >= 21) {
+    a <- min(0.85, 0.65 + 0.02 * (occurrence_period - 21))
+  } else {
+    a <- max(0.85, 1 - 0.0075 * occurrence_period)
+  }
+  mean_quarter <- a * min(25, max(1, 6 + 4*log(claim_size/(0.10 * ref_claim))))
+  # suppose the setldel mean is linearly related to the notidel of the claim
+  target_mean <- (mean_quarter + notidel) / 4 / time_unit
+  
+  # specify the target Weibull coefficient of variation
+  target_cv <- 0.60
+
+  c(shape = get_Weibull_parameters(target_mean, target_cv)[1, ],
+    scale = get_Weibull_parameters(target_mean, target_cv)[2, ])
 }
 ```
 
-### Implementation and Output
+As this parameter function `setldel_param_extd` is dependent on `notidel`, it should not be surprising that we need to input the simulated notification delays when calling `claim_closure`. We need to make sure that the argument names are matched exactly (`notidel` in this example) and that the input is specified as a vector of simulated quantities (not a list).
+
 ```{r}
-# shorter equivalent code:
-# setldel <- claim_closure(n_vector, claim_sizes)
-setldel <- claim_closure(n_vector, claim_sizes, setldel_mean, setldel_cv)
-setldel[[1]]
+## output
+# simulate the settlement delays from the Weibull with parameters above
+notidel_vect <- unlist(notidel) # convert to a vector
+setldel_extd <- claim_closure(n_vector, claim_sizes, rfun = rweibull, 
+                              paramfun = setldel_param_extd,
+                              notidel = notidel_vect)
+setldel_extd[[1]]
 ```
 
 
 5. Claim Partial Payment - Number of Partial Payments {#payment-count}
 ---
-### Input parameters
-* `simulate_no_pmt` = a function that generates the number of partial payments associated with a particular claim, conditional on `claim_size`
+
+`claim_payment_no()` generates the number of partial payments associated with a particular claim, from a user-defined random generation function which may depend on `claim_size`.
+
+## Example 5.1: Default mixture distribution {#ex5.1}
+Below we spell out the default function in `SynthETIC` that simulates the number of partial payments (from a mixture distribution):
 
 ```{r}
-benchmark_1 <- 0.0375 * ref_claim
-benchmark_2 <- 0.075 * ref_claim
-simulate_no_pmt <- function(claim_size, claim_size_benchmark_1, claim_size_benchmark_2) {
-  # WARNING: Do not change function arguments
-  if (claim_size <= claim_size_benchmark_1) {
-    return(sample(c(1, 2), size = 1, replace = TRUE, prob = c(1/2, 1/2)))
-  } else if (claim_size_benchmark_1 < claim_size & claim_size <= claim_size_benchmark_2) {
-    return(sample(c(2, 3), size = 1, replace = TRUE, prob = c(1/3, 2/3)))
-  } else {
-    # It can be shown that E(M) = 3 + 1/p in this case
-    no_pmt_mean <- min(8, 4 + log(claim_size/claim_size_benchmark_2))
-    prob <- 1/(no_pmt_mean - 3)
-    return(stats::rgeom(1, prob) + 4)
-  }
+## input
+# the default random generating function
+rmixed_payment_no <- function(n, claim_size, claim_size_benchmark_1, claim_size_benchmark_2) {
+  # construct the range indicators
+  test_1 <- (claim_size_benchmark_1 < claim_size & claim_size <= claim_size_benchmark_2)
+  test_2 <- (claim_size > claim_size_benchmark_2)
+
+  # if claim_size <= claim_size_benchmark_1
+  no_pmt <- sample(c(1, 2), size = n, replace = T, prob = c(1/2, 1/2))
+  # if claim_size is between the two benchmark values
+  no_pmt[test_1] <- sample(c(2, 3), size = sum(test_1), replace = T, prob = c(1/3, 2/3))
+  # if claim_size > claim_size_benchmark_2
+  no_pmt_mean <- pmin(8, 4 + log(claim_size/claim_size_benchmark_2))
+  prob <- 1 / (no_pmt_mean - 3)
+  no_pmt[test_2] <- stats::rgeom(n = sum(test_2), prob = prob[test_2]) + 4
+
+  no_pmt
 }
 ```
 
-### Implementation and Output
+Since the random function directly takes `claim_size` as an input, no additional parameterisation is required (unlike in [Example 3.1](#ex3.1), where we first need a `paramfun` that turns the `claim_size` into Weibull parameters). We can simply run `claim_payment_no()` without inputting a `paramfun`.
+
 ```{r}
-# shorter equivalent code:
-# no_payments <- claim_payment_no(n_vector, claim_sizes)
-no_payments <- claim_payment_no(n_vector, claim_sizes, simulate_no_pmt,
-                                claim_size_benchmark_1 = benchmark_1,
-                                claim_size_benchmark_2 = benchmark_2)
+## output
+no_payments <- claim_payment_no(n_vector, claim_sizes, rfun = rmixed_payment_no,
+                                claim_size_benchmark_1 = 0.0375 * ref_claim,
+                                claim_size_benchmark_2 = 0.075 * ref_claim)
 no_payments[[1]]
+```
+
+Note that the `claim_size_benchmark_1` and `claim_size_benchmark_2` are passed on to `rmixed_payment_no` and will not be required if we choose an [alternative sampling distribution](#ex5.2).
+
+This mixture sampling distribution has been included as the default. **There is no need to reproduce the above code if the user is happy with this default distribution.** A simple equivalent to the above code is just
+
+```{r, eval=FALSE}
+no_payments <- claim_payment_no(n_vector, claim_sizes)
+```
+
+This example is here only to demonstrate how the default function operates. If one would like to keep the structure of this function but modify the benchmark values, they may do so via
+
+```{r}
+no_payments_tmp <- claim_payment_no(n_vector, claim_sizes,
+                                    claim_size_benchmark_2 = 0.1 * ref_claim)
+```
+
+## Example 5.2: Alternative distribution for number of partial payments {#ex5.2}
+Suppose we want to use a zero truncated Poisson distribution instead, with the rate parameter as a function of `claim_size`:
+
+```{r}
+## input
+paymentNo_param <- function(claim_size) {
+  no_pmt_mean <- pmax(4, pmin(8, 4 + log(claim_size / 15000)))
+  c(lambda = no_pmt_mean - 3)
+}
+
+## output
+no_payments_pois <- claim_payment_no(
+  n_vector, claim_sizes, rfun = actuar::rztpois, paramfun = paymentNo_param)
+table(unlist(no_payments_pois))
 ```
 
 
 Interlude: Claims Dataset
 ---
-Use the following code to create a claims dataset containing all individual claims features.
+We can use the following code to create a claims dataset containing all individual claims features that we have simulated so far:
+
 ```{r}
 claim_dataset <- generate_claim_dataset(
   frequency_vector = n_vector,
@@ -326,135 +677,173 @@ claim_dataset <- generate_claim_dataset(
 str(claim_dataset)
 ```
 
-`test_claim_dataset`, included as part of the package, is an example dataset of individual claims features using the default assumptions.
+`test_claim_dataset`, included as part of the package, is an example dataset of individual claims features resulting from a specific run with the default assumptions.
 ```{r}
 str(test_claim_dataset)
-head(test_claim_dataset, n = 20)
 ```
 
 
 6. Claim Partial Payment - Sizes of Partial Payments (without inflation) {#payment-size}
 ---
-### Input parameters
-* `simulate_amt_pmt` = a function that generates and returns the payment pattern of a particular claim (as a vector of size = `no_pmt`), conditional on `no_pmt` and `claim_size`
+
+## Example 6.1: Default Distribution {#ex6.1}
+The default function samples the sizes of partial payments conditional on the number of partial payments, and the size of the claim:
+
 ```{r}
-simulate_amt_pmt <- function(no_pmt, claim_size) {
-  # WARNING: Do not change function arguments
-  if (no_pmt >= 4) {
-    ## 1) Simulate the "complement" of the proportion of total claim size represented by the last two payments
+## input
+rmixed_payment_size <- function(n, claim_size) {
+  # n = number of simulations, here n should be the number of partial payments
+  if (n >= 4) {
+    # 1) Simulate the "complement" of the proportion of total claim size 
+    #    represented by the last two payments
     p_mean <- 1 - min(0.95, 0.75 + 0.04*log(claim_size/(0.10 * ref_claim)))
     p_CV <- 0.20
     p_parameters <- get_Beta_parameters(target_mean = p_mean, target_cv = p_CV)
-    last_two_pmts_complement <- stats::rbeta(1, shape1 = p_parameters[1], shape2 = p_parameters[2])
+    last_two_pmts_complement <- stats::rbeta(
+      1, shape1 = p_parameters[1], shape2 = p_parameters[2])
     last_two_pmts <- 1 - last_two_pmts_complement
-
-    ## 2) Simulate the proportion of last_two_pmts paid in the second last payment
+    
+    # 2) Simulate the proportion of last_two_pmts paid in the second last payment
     q_mean <- 0.9
     q_CV <- 0.03
     q_parameters <- get_Beta_parameters(target_mean = q_mean, target_cv = q_CV)
     q <- stats::rbeta(1, shape1 = q_parameters[1], shape2 = q_parameters[2])
 
-    ## 3) Calculate the respective proportions of claim amount paid in the last 2 payments
+    # 3) Calculate the respective proportions of claim amount paid in the 
+    #    last 2 payments
     p_second_last <- q * last_two_pmts
     p_last <- (1-q) * last_two_pmts
 
-    ## 4) Simulate the "unnormalised" proportions of claim amount paid in the first (m - 2) payments
-    p_unnorm_mean <- last_two_pmts_complement/(no_pmt - 2)
+    # 4) Simulate the "unnormalised" proportions of claim amount paid 
+    #    in the first (m - 2) payments
+    p_unnorm_mean <- last_two_pmts_complement/(n - 2)
     p_unnorm_CV <- 0.10
-    p_unnorm_parameters <- get_Beta_parameters(target_mean = p_unnorm_mean, target_cv = p_unnorm_CV)
-    amt <- stats::rbeta(no_pmt - 2, 
-                        shape1 = p_unnorm_parameters[1], shape2 = p_unnorm_parameters[2])
+    p_unnorm_parameters <- get_Beta_parameters(
+      target_mean = p_unnorm_mean, target_cv = p_unnorm_CV)
+    amt <- stats::rbeta(
+      n - 2, shape1 = p_unnorm_parameters[1], shape2 = p_unnorm_parameters[2])
 
-    ## 5) Normalise the proportions simulated in step 4
+    # 5) Normalise the proportions simulated in step 4
     amt <- last_two_pmts_complement * (amt/sum(amt))
-
-    ## 6) Attach the last 2 proportions, p_second_last and p_last
+    # 6) Attach the last 2 proportions, p_second_last and p_last
     amt <- append(amt, c(p_second_last, p_last))
-
-    ## 7) Multiply by claim_size to obtain the actual payment amounts
+    # 7) Multiply by claim_size to obtain the actual payment amounts
     amt <- claim_size * amt
-
-  } else if (no_pmt == 2 | no_pmt == 3) {
-    p_unnorm_mean <- 1/no_pmt
+    
+  } else if (n == 2 | n == 3) {
+    p_unnorm_mean <- 1/n
     p_unnorm_CV <- 0.10
-    p_unnorm_parameters <- get_Beta_parameters(target_mean = p_unnorm_mean, target_cv = p_unnorm_CV)
-    amt <- stats::rbeta(no_pmt, shape1 = p_unnorm_parameters[1], shape2 = p_unnorm_parameters[2])
-
-    ## Normalise the proportions and multiply by claim_size to obtain the actual payment amounts
+    p_unnorm_parameters <- get_Beta_parameters(
+      target_mean = p_unnorm_mean, target_cv = p_unnorm_CV)
+    amt <- stats::rbeta(
+      n, shape1 = p_unnorm_parameters[1], shape2 = p_unnorm_parameters[2])
+    # Normalise the proportions and multiply by claim_size to obtain the actual payment amounts
     amt <- claim_size * amt/sum(amt)
 
   } else {
     # when there is a single payment
     amt <- claim_size
-
   }
-
-  stopifnot(length(amt) == no_pmt)
   return(amt)
 }
-```
 
-### Implementation and Output
-```{r}
-# shorter equivalent code:
-# payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments)
-payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments, simulate_amt_pmt)
+## output
+payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments,
+                                    rfun = rmixed_payment_size)
 payment_sizes[[1]][[1]]
 ```
 
+As this is the default random generation function that `SynthETIC` adopts, a shorter equivalent command would be to call `claim_payment_no` without specifying a `rfun`.
+
+```{r, eval=FALSE}
+payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments)
+```
+
+## Example 6.2: Alternative payment size distribution {#ex6.2}
+Let's consider a simplistic example where we assume the partial payment sizes are (stochastically) equal. This will result in the following simulation function:
+
+```{r}
+## input
+unif_payment_size <- function(n, claim_size) {
+  prop <- runif(n)
+  prop.normalised <- prop / sum(prop)
+  
+  return(claim_size * prop)
+}
+
+## output
+# note that we don't need to specify a paramfun as rfun is directly a function
+# of claim_size
+payment_sizes_unif <- claim_payment_size(n_vector, claim_sizes, no_payments,
+                                         rfun = unif_payment_size)
+payment_sizes_unif[[1]][[1]]
+```
+
+
 7. Claim Payment Time {#payment-time}
 ---
-### Input parameters
-* `simulate_d` = a function that generates the payment delay pattern of a particular claim (as a vector of size = `no_pmt`), taking as input `no_pmt`, `claim_size`, `setldel`, `occurrence_period`, and `setldel_mean_function`
+The simulation of the inter-partial delays is almost identical to that of [partial payment sizes](#payment-size), except that it also depends on the claim settlement delay - the inter-partial delays should add up to the settlement delay.
+
+Other than this, the `SynthETIC` function implementation of `claim_payment_delay()` is almost the same as `claim_payment_size()`, but of course, with a different default simulation function:
+
 ```{r}
-simulate_d <- function(no_pmt, claim_size, setldel, occurrence_period,
-                       setldel_mean_function) {
-  # WARNING: Do not change function arguments
-  result <- c(rep(NA, no_pmt))
+## input
+r_pmtdel <- function(n, claim_size, setldel, setldel_mean) {
+  result <- c(rep(NA, n))
 
   # First simulate the unnormalised values of d, sampled from a Weibull distribution
-  if (no_pmt >= 4) {
+  if (n >= 4) {
     # 1) Simulate the last payment delay
     unnorm_d_mean <- (1 / 4) / time_unit
     unnorm_d_cv <- 0.20
     parameters <- get_Weibull_parameters(target_mean = unnorm_d_mean, target_cv = unnorm_d_cv)
-    result[no_pmt] <- stats::rweibull(1, shape = parameters[1], scale = parameters[2])
+    result[n] <- stats::rweibull(1, shape = parameters[1], scale = parameters[2])
 
     # 2) Simulate all the other payment delays
-    for (i in 1:(no_pmt - 1)) {
-      unnorm_d_mean <- setldel_mean_function(claim_size = claim_size,
-                                             occurrence_period = occurrence_period)/no_pmt
+    for (i in 1:(n - 1)) {
+      unnorm_d_mean <- setldel_mean / n
       unnorm_d_cv <- 0.35
       parameters <- get_Weibull_parameters(target_mean = unnorm_d_mean, target_cv = unnorm_d_cv)
       result[i] <- stats::rweibull(1, shape = parameters[1], scale = parameters[2])
     }
 
   } else {
-    for (i in 1:no_pmt) {
-      unnorm_d_mean <- setldel_mean_function(claim_size = claim_size,
-                                             occurrence_period = occurrence_period)/no_pmt
+    for (i in 1:n) {
+      unnorm_d_mean <- setldel_mean / n
       unnorm_d_cv <- 0.35
       parameters <- get_Weibull_parameters(target_mean = unnorm_d_mean, target_cv = unnorm_d_cv)
       result[i] <- stats::rweibull(1, shape = parameters[1], scale = parameters[2])
     }
   }
 
-  stopifnot(sum(is.na(result)) == 0)
   # Normalise d such that sum(inter-partial delays) = settlement delay
   # To make sure that the pmtdels add up exactly to setldel, we treat the last one separately
-  result[1:no_pmt-1] <- (setldel/sum(result)) * result[1:no_pmt-1]
-  result[no_pmt] <- setldel - sum(result[1:no_pmt-1])
+  result[1:n-1] <- (setldel/sum(result)) * result[1:n-1]
+  result[n] <- setldel - sum(result[1:n-1])
 
   return(result)
 }
-```
 
-### Implementation and Output
-```{r}
-# shorter equivalent code:
-# payment_delays <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel)
-payment_delays <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel,
-                                      setldel_mean, simulate_d)
+param_pmtdel <- function(claim_size, setldel, occurrence_period) {
+  # mean settlement delay
+  if (claim_size < (0.10 * ref_claim) & occurrence_period >= 21) {
+    a <- min(0.85, 0.65 + 0.02 * (occurrence_period - 21))
+  } else {
+    a <- max(0.85, 1 - 0.0075 * occurrence_period)
+  }
+  mean_quarter <- a * min(25, max(1, 6 + 4*log(claim_size/(0.10 * ref_claim))))
+  target_mean <- mean_quarter / 4 / time_unit
+
+  c(claim_size = claim_size,
+    setldel = setldel,
+    setldel_mean = target_mean)
+}
+
+## output
+payment_delays <- claim_payment_delay(
+  n_vector, claim_sizes, no_payments, setldel,
+  rfun = r_pmtdel, paramfun = param_pmtdel,
+  occurrence_period = rep(1:I, times = n_vector))
 
 # payment times on a continuous time scale
 payment_times <- claim_payment_time(n_vector, occurrence_times, notidel, payment_delays)
@@ -542,15 +931,29 @@ transaction_dataset <- generate_transaction_dataset(
 str(transaction_dataset)
 ```
 
-`test_transaction_dataset`, included as part of the package, is an example dataset showing full information of the claims features at a transaction/payment level, generated using the default assumptions.
+`test_transaction_dataset`, included as part of the package, is an example dataset showing full information of the claims features at a transaction/payment level, generated by a specific `SynthETIC` run with the default assumptions.
+
 ```{r}
 str(test_transaction_dataset)
-head(test_transaction_dataset, n = 20)
 ```
 
 
 Output
 ---
+`SynthETIC` includes an output function which summarises the claim payments by occurrence and development periods. The usage of the function takes the form
+
+```{r, eval=FALSE}
+claim_output(
+  frequency_vector = ,
+  payment_time_list = ,
+  payment_size_list = ,
+  aggregate_level = 1,
+  incremental = TRUE,
+  future = TRUE
+)
+```
+
+Examples:
 ```{r}
 # 1. Constant dollar value INCREMENTAL triangle
 output <- claim_output(n_vector, payment_times, payment_sizes,
@@ -572,31 +975,28 @@ output_actual_cum <- claim_output(n_vector, payment_times, payment_inflated,
 claim_output(n_vector, payment_times, payment_sizes, aggregate_level = 4)
 ```
 
-
-Conversion to Time Series Objects
----
-At any point in the analysis, the simulated output can be converted to a `ts` object by running:
-```{r, eval=FALSE}
-list_as_ts <- stats::ts(list, start = , frequency = )
-```
-
-The conversion to `ts` objects is easy, but many functionalities with the `ts` class may not apply to the new `ts` objects created as they do not follow a rigid `ts` structure (which requires data to be sampled at equispaced points in time). The main advantage of conversion to time series is that data can now be characterised/indexed by time (see `stats::window()`).
+Note that by setting `future = FALSE` we can obtain the upper left part of the triangle (i.e. only the past claim payments). The past data can then be used in conjunction with the `ChainLadder` package to perform chain-ladder reserving analysis:
 
 ```{r}
-to_convert <- c("n_vector", "occurrence_times", "claim_sizes", 
-                "notidel", "setldel", "no_payments", "payment_sizes", 
-                "payment_delays", "payment_times", "payment_inflated")
-for (i in to_convert) {
-  # equivalently, claim_sizes_ts <- ts(claim_sizes, start = c(2010, 4), frequency = 4)
-  # and repeat for each of the output quantities
-  list_original <- eval(as.name(i))
-  list_as_ts <- stats::ts(list_original, start = c(2010, 1), frequency = 4)
-  assign(paste(i, "_ts", sep=""), list_as_ts)
+# output the past cumulative triangle
+cumtri <- claim_output(n_vector, payment_times, payment_sizes,
+                       aggregate_level = 4, incremental = FALSE, future = FALSE)
+# calculate the age to age factors
+selected <- attr(ChainLadder::ata(cumtri), "vwtd")
+# complete the triangle
+CL_prediction <- cumtri
+J <- nrow(cumtri)
+for (i in 2:J) {
+  for (j in (J - i + 2):J) {
+    CL_prediction[i, j] <- CL_prediction[i, j - 1] * selected[j - 1]
+  }
 }
 
-# display the simulated claim sizes by occurrence quarter for 2019
-stats::window(claim_sizes_ts, start = c(2019, 1), end = c(2019, 4))
+CL_prediction
 ```
+
+We observe that the chain-ladder analysis performs very poorly on this simulated claim dataset. This is perhaps unsurprising in view of the data features and the extent to which they breach chain ladder assumptions. Data sets such as this are useful for testing models that endeavour to represent data outside the scope of the chain-ladder.
+
 
 Plot of Cumulative Claims Payments
 ---
@@ -604,13 +1004,13 @@ Note that by default, similar to the case of `claim_output` and `claim_payment_i
 
 Users can set `adjust = FALSE` to see the "true" picture of claims development without such artificial adjustment. If the plots look significantly different, this indicates to the user that the user's selection of lag parameters (notification and/or settlement delays) is not well matched to the maximum number of development periods allowed, and consideration might be given to changing one or the other.
 
-```{r fig.width=7, fig.height=6}
+```{r dpi=150, fig.width=7, fig.height=6, out.width=650}
 plot(test_claims_object)
 # compare with the "full complete picture"
 plot(test_claims_object, adjust = FALSE)
 ```
 
-```{r, fig.width=7, fig.height=6}
+```{r dpi=150, fig.width=7, fig.height=6, out.width=650}
 # plot by occurrence and development years
 plot(test_claims_object, by_year = TRUE)
 ```
@@ -628,20 +1028,22 @@ for (i in 1:times) {
   n_vector <- claim_frequency(I, E, lambda)
   occurrence_times <- claim_occurrence(n_vector)
   # Module 2: Claim size
-  claim_sizes <- claim_size(n_vector, S_df, range = c(0, 1e24))
+  claim_sizes <- claim_size(n_vector, S_df, type = "p", range = c(0, 1e24))
   # Module 3: Claim notification
-  notidel <- claim_notification(n_vector, claim_sizes, notidel_mean, notidel_cv)
+  notidel <- claim_notification(n_vector, claim_sizes, paramfun = notidel_param)
   # Module 4: Claim settlement
-  setldel <- claim_closure(n_vector, claim_sizes, setldel_mean, setldel_cv)
+  setldel <- claim_closure(n_vector, claim_sizes, paramfun = setldel_param)
   # Module 5: Claim payment count
-  no_payments <- claim_payment_no(n_vector, claim_sizes, simulate_no_pmt,
-                                  claim_size_benchmark_1 = benchmark_1,
-                                  claim_size_benchmark_2 = benchmark_2)
+  no_payments <- claim_payment_no(n_vector, claim_sizes, rfun = rmixed_payment_no,
+                                  claim_size_benchmark_1 = 0.0375 * ref_claim,
+                                  claim_size_benchmark_2 = 0.075 * ref_claim)
   # Module 6: Claim payment size
-  payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments, simulate_amt_pmt)
+  payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments, 
+                                      rfun = rmixed_payment_size)
   # Module 7: Claim payment time
   payment_delays <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel,
-                                        setldel_mean, simulate_d)
+                                        rfun = r_pmtdel, paramfun = param_pmtdel,
+                                        occurrence_period = rep(1:I, times = n_vector))
   payment_times <- claim_payment_time(n_vector, occurrence_times, notidel, payment_delays)
   # Module 8: Claim inflation
   payment_inflated <- claim_payment_inflation(
@@ -671,7 +1073,7 @@ This long-run average of claims development offers insights into the effects of 
 
 The code below runs only for 10 simulations and we can already see the trend emerging, which matches with the result of our single simulation run above. Increasing `times` to run simulation will show a smoother trend, which we refrain from producing here because running simulation on this amount of data takes some time (100 simulations take around 10 minutes on a quad-core machine). We remark that the major simulation lags are caused by the `claim_payment_delay` and (less severely) `claim_payment_size` functions.
 
-```{r, fig.width=7, fig.height=6}
+```{r dpi=150, fig.width=7, fig.height=6, out.width=650}
 start.time <- proc.time()
 times <- 10
 
@@ -680,14 +1082,15 @@ times <- 10
 n_vector <- claim_frequency(I, E = E * times, lambda)
 occurrence_times <- claim_occurrence(n_vector)
 claim_sizes <- claim_size(n_vector)
-notidel <- claim_notification(n_vector, claim_sizes, notidel_mean, notidel_cv)
-setldel <- claim_closure(n_vector, claim_sizes, setldel_mean, setldel_cv)
-no_payments <- claim_payment_no(n_vector, claim_sizes, simulate_no_pmt,
-                                claim_size_benchmark_1 = benchmark_1,
-                                claim_size_benchmark_2 = benchmark_2)
-payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments, simulate_amt_pmt)
+notidel <- claim_notification(n_vector, claim_sizes, paramfun = notidel_param)
+setldel <- claim_closure(n_vector, claim_sizes, paramfun = setldel_param)
+no_payments <- claim_payment_no(n_vector, claim_sizes, rfun = rmixed_payment_no,
+                                claim_size_benchmark_1 = 0.0375 * ref_claim,
+                                claim_size_benchmark_2 = 0.075 * ref_claim)
+payment_sizes <- claim_payment_size(n_vector, claim_sizes, no_payments, rmixed_payment_size)
 payment_delays <- claim_payment_delay(n_vector, claim_sizes, no_payments, setldel,
-                                      setldel_mean, simulate_d)
+                                      rfun = r_pmtdel, paramfun = param_pmtdel,
+                                      occurrence_period = rep(1:I, times = n_vector))
 payment_times <- claim_payment_time(n_vector, occurrence_times, notidel, payment_delays)
 payment_inflated <- claim_payment_inflation(
   n_vector, payment_sizes, payment_times, occurrence_times,

@@ -4,17 +4,18 @@
 \alias{claim_size}
 \title{Claim Size}
 \usage{
-claim_size(frequency_vector, S_cdf, range = c(0, 1e+24), ...)
+claim_size(frequency_vector, simfun, type = c("r", "p"), ...)
 }
 \arguments{
 \item{frequency_vector}{a vector of claim frequencies for all the periods.}
 
-\item{S_cdf}{(optional) cumulative distribution function to be sampled from.}
+\item{simfun}{optional alternative sampling distribution; see Details.}
 
-\item{range}{the possible set of values of claim sizes, with default
-(0, 1e24).}
+\item{type}{the type of \code{simfun} provided. The default is a random generation
+function (e.g. \code{rweibull}); the alternative \code{"p"} is any valid cumulative
+distribution function (e.g. \code{pweibull}).}
 
-\item{...}{other arguments/parameters to be passed onto \code{S_cdf}.}
+\item{...}{other arguments/parameters to be passed onto \code{simfun}.}
 }
 \value{
 A list of claim sizes such that the \eqn{i}th component of the
@@ -30,13 +31,27 @@ the periods, given its cumulative distribution function.
 By default \code{claim_size()} assumes a left truncated power
 normal distribution: \eqn{S^0.2 ~ Normal (9.5, sd = 3)}, left truncated
 at 30. The truncation is done via resampling for rejected values. \cr \cr
-Users can opt to use predefined distributions if desired. See Examples.
+Users can opt to use alternative distributions if desired. As discussed in
+\code{\link{claim_frequency}}, users can declare such specification through
+the \code{simfun} argument, which takes both random generation functions
+(\code{type = "r"}, the default) and cumulative distribution functions
+(\code{type = "p"}). See Examples. \cr \cr
+For the latter, \code{claim_size()} will first search for the existence of the
+corresponding \code{r}-function. If it notes the existence of such an \code{r}-function
+(e.g. \code{rweibull} for \code{simfun = pweibull}), it will directly apply the
+\code{r}-function to optimise simulation efficiency. Otherwise, the function uses
+a numerical inverse transform method for simulation (see
+\code{\link{simulate_cdf}}), which may not be the most efficient and can
+potentially result in errors if an appropriate \code{range} is not specified in
+the optional arguments.
 }
 \examples{
 n_vector <- c(90, 79, 102, 78, 86, 88, 116, 84, 93, 104)
 claim_size(n_vector)[[1]] # gives the sizes for all
                           # all claims incurred in period 1
 
-# with some custom pre-defined distribution function
-claim_size(n_vector, stats::pweibull, shape = 4, scale = 100000)[[1]]
+# use some custom pre-defined distribution function
+claim_size(n_vector, stats::rweibull, shape = 4, scale = 100000)[[1]]
+# equivalently
+claim_size(n_vector, stats::pweibull, "p", shape = 4, scale = 100000)[[1]]
 }
