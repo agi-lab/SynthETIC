@@ -10,7 +10,8 @@ claim_output(
   payment_size_list,
   aggregate_level = 1,
   incremental = TRUE,
-  future = TRUE
+  future = TRUE,
+  adjust = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,10 @@ else returns the cumulative payment square.}
 \item{future}{logical; if true shows the full claim triangle (i.e. including
 claim payments in future periods), else shows only the past triangle (default
 TRUE).}
+
+\item{adjust}{logical; if true accumulates all payments beyond the max
+development period to the last development period, else shows a separate
+"tail" column for all the out-of-bound transactions.}
 }
 \value{
 An array of claims payments.
@@ -42,16 +47,24 @@ lower right triangle the unseen future. \cr \cr
 Users can modify the aggregate level by providing an \code{aggregate_level}
 argument to the function. For example, setting \code{aggregate_level = 4} when
 working with calendar \emph{quarters} produces a payment square by occurrence and
-development \emph{year}.
+development \emph{year}. \cr \cr
+Users will also have the option to decide whether to include the out-of-bound
+transactions to the maximum DQ, or to leave them in a separate "tail" cell,
+see Details.
 }
 \details{
-\strong{Remark on out-of-bound payment times}: This function includes adjustment
+\strong{Remark on out-of-bound payment times}: This function allows adjustment
 for out-of-bound transaction dates, by forcing payments that were projected
 to fall out of the maximum development period to be paid at the exact end of
-the maximum development period allowed. For example, if we consider 40
-periods of development and a claim incurred in the interval (20, 21] was
-projected to have a payment at time 62.498210, then we would treat such a
-payment as if it occurred at time 60 for the purpose of tabulation.
+the maximum development period allowed (when we set \code{adjust = TRUE}, which is
+the default behaviour). For example, if we consider 40 periods of development
+and a claim incurred in the interval (20, 21] was projected to have a payment
+at time 62.498210, then for the purpose of tabulation, we can
+\itemize{
+\item treat such a payment as if it occurred at time 60 (\code{adjust = TRUE});
+\item leave the payment in the "tail" cell, so the user can see the proportion of
+payments beyond the maximum development period (\code{adjust = FALSE}).
+}
 }
 \examples{
 attach(test_claims_object)

@@ -949,9 +949,12 @@ claim_output(
   payment_size_list = ,
   aggregate_level = 1,
   incremental = TRUE,
-  future = TRUE
+  future = TRUE,
+  adjust = TRUE
 )
 ```
+
+Note that by default, we aggregate all out-of-bound transactions into the maximum development period. But if we set `adjust = FALSE`, then the function would produce a separate "tail" column to represent all payments beyond the maximum development period (see function documentation `?claim_output`).
 
 Examples:
 ```{r}
