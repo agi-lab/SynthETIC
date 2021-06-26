@@ -139,10 +139,12 @@ claim_output <- function(
         }
       }
 
-      if (adjust == FALSE) {
-        # tail cell
+      if (adjust == TRUE) {
+        # accumulate everything to the last development period
+        output_incremental[i, j] <- output_incremental[i, j] + sum(square_curr[!select])
+      } else {
         output_incremental[i, "tail"] <-
-          sum(output_incremental_orig[side_occurrence, "tail"])
+          sum(square_curr[!select]) + sum(output_incremental_orig[side_occurrence, "tail"])
       }
     }
   }
