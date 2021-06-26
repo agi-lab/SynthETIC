@@ -1,6 +1,6 @@
 Package: SynthETIC
 Title: Synthetic Experience Tracking Insurance Claims
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
     person("Benjamin", "Avanzi", role = "aut", email = "b.avanzi@unimelb.edu.au"),
     person("Greg", "Taylor", role = "aut", email = "greg_taylor60@hotmail.com"),

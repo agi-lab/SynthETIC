@@ -1,5 +1,24 @@
 # SynthETIC
 
+# SynthETIC 1.0.1
+
+## New features {#new-features-1.0.1}
+
+* Updates `claim_output()` to allow an option to `adjust` the treatment of
+out-of-bound transactions in tabulation. The previous version (`1.0.0`) 
+automatically forced all out-of-bound transactions to be paid at the exact end 
+of the maximum development period allowed. This is now set as the default
+behaviour, but the user can also set `adjust = FALSE` to see the proportion of
+payments projected to fall beyond the maximum development period (the "tail").
+
+## Minor improvements and fixes 
+
+* Updates `claim_output()` to force `adjust` for higher `aggregate_level`. The
+issue with previous function was that it ignored payments beyond the max
+development period after aggregation. This is now fixed - either merged to the
+end DQ, or in a separate `tail` cell (if `adjust = FALSE`).
+
+
 # SynthETIC 1.0.0
 
 ## New features {#new-features-1.0.0}
