@@ -180,7 +180,7 @@ claim_payment_size <- function(
   # if params only has one parameter, asplit() won't work
   if (!is.null(names(params))) {
     params_split <- split(unname(params), names(params))
-  } else {
+  } else if (length(params)) {
     params_split <- asplit(params, 1)
   }
 
