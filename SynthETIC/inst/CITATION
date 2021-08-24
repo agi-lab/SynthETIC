@@ -1,0 +1,25 @@
+citHeader("To cite SynthETIC in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title = "{SynthETIC}: {An} individual insurance claim simulator with feature control",
+	volume = "100",
+	issn = "01676687",
+	url = "https://linkinghub.elsevier.com/retrieve/pii/S0167668721001013",
+	doi = "10.1016/j.insmatheco.2021.06.004",
+	language = "en",
+	journal = "Insurance: Mathematics and Economics",
+	author = personList(
+	  person("Benjamin", "Avanzi"),
+    person("Greg", "Taylor"),
+    person("Melantha", "Wang"),
+    person("Bernard", "Wong")),
+	month = "sep",
+	year = "2021",
+	pages = "296--308",
+	textVersion = paste("Avanzi, B., Taylor, G., Wang, M., Wong, B., 2021.",
+	                    "SynthETIC: An individual insurance claim simulator with",
+	                    "feature control. Insurance: Mathematics and Economics",
+	                    "100, 296–308.",
+	                    "https://doi.org/10.1016/j.insmatheco.2021.06.004")
+)
