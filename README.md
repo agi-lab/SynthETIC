@@ -6,6 +6,7 @@ SynthETIC Claim Simulator
 
 ## Reference
 For a full description of `SythETIC`'s structure and test parameters, readers should refer to:
+
 Avanzi, B., Taylor, G., Wang, M., Wong, B., 2021. `SynthETIC`: An individual insurance claim simulator with feature control. *Insurance: Mathematics and Economics* 100, 296–308. https://doi.org/10.1016/j.insmatheco.2021.06.004
 
 A free copy is accessible via [arXiv:2008.05693](https://arxiv.org/abs/2008.05693).
