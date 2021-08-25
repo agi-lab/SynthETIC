@@ -1,5 +1,13 @@
 # SynthETIC
 
+# SynthETIC 1.0.2
+
+## Minor improvements and fixes 
+
+* Updates citation
+
+* Fixes a bug in the default sampling function of `claim_payment_no()`
+
 # SynthETIC 1.0.1
 
 ## New features {#new-features-1.0.1}
