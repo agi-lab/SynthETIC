@@ -89,10 +89,6 @@ claim_payment_no <- function(
       }
 
       # generate the number of payments according to where the claim size sits
-      # construct the region indicators
-      test_1 <- (claim_size_benchmark_1 < claim_size & claim_size <= claim_size_benchmark_2)
-      test_2 <- (claim_size > claim_size_benchmark_2)
-
       no_pmt <- vector(length = n)
       for (i in 1:n) {
         if (claim_size[i] <= claim_size_benchmark_1[i]) {
@@ -102,7 +98,7 @@ claim_payment_no <- function(
         } else {
           no_pmt_mean <- pmin(8, 4 + log(claim_size[i]/claim_size_benchmark_2[i]))
           prob <- 1 / (no_pmt_mean - 3)
-          no_pmt[i] <- stats::rgeom(n = 1, prob = prob[test_2]) + 4
+          no_pmt[i] <- stats::rgeom(n = 1, prob = prob) + 4
         }
       }
 
