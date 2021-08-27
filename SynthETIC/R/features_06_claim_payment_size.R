@@ -182,6 +182,8 @@ claim_payment_size <- function(
     params_split <- split(unname(params), names(params))
   } else if (length(params)) {
     params_split <- asplit(params, 1)
+  } else {
+    params_split <- params
   }
 
   # do.call rfun, but ignore unused arguments
