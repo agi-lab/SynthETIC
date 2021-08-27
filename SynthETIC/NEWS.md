@@ -8,6 +8,8 @@
 
 * Fixes a bug in the default sampling function of `claim_payment_no()`
 
+* Fixes the treatment of `params_split` to allow for trivial params
+
 # SynthETIC 1.0.1
 
 ## New features {#new-features-1.0.1}
