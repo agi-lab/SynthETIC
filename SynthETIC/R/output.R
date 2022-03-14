@@ -420,3 +420,129 @@ plot.claims <- function(
                      legend.position = "bottom")
   }
 }
+
+
+#' Plot of Cumulative Claims Payments (Incurred Pattern)
+#'
+#' Generates a plot of cumulative claims paid (as a percentage of total amount
+#' incurred) as a function of development time for each occurrence period.
+#'
+#' @param transactions a dataset of partial payment records.
+#' @param occurrence_time_col name of column that stores the time of occurrence
+#' of the claims (on a **continuous** scale).
+#' @param payment_time_col name of column that stores the time of partial
+#' payments of the claims (on a **continuous** scale).
+#' @param payment_size_col name of column that stores the size of partial
+#' payments of the claims.
+#' @param by_year if `TRUE` returns a plot by occurrence year; otherwise returns
+#' a plot by occurrence period (default).
+#' @param adjust if `TRUE` then the payment times will be forced to match with
+#' the maximum development period under consideration, otherwise the plot will
+#' see claims beyond the maximum development period; default `TRUE`.
+#' @seealso \code{\link{generate_transaction_dataset}}
+#' @examples
+#' plot_transaction_dataset(test_transaction_dataset)
+#'
+#' # Plot claim development without end-of-development-period correction
+#' plot_transaction_dataset(test_transaction_dataset, adjust = FALSE)
+#'
+#' # Plot claim development without inflation effects
+#' plot_transaction_dataset(test_transaction_dataset, payment_size_col = "payment_size")
+#' @importFrom ggplot2 ggplot aes
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data
+#' @export
+plot_transaction_dataset <- function(
+    transactions,
+    occurrence_time_col = "occurrence_time",
+    payment_time_col = "payment_time",
+    payment_size_col = "payment_inflated",
+    by_year = FALSE, adjust = TRUE)
+{
+
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package \"dplyr\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!occurrence_time_col %in% colnames(transactions)) {
+    stop(paste(occurrence_time_col, "not in the provided dataset. Check your input!"))
+  } else if (!payment_time_col %in% colnames(transactions)) {
+    stop(paste(payment_time_col, "not in the provided dataset. Check your input!"))
+  } else if (!payment_size_col %in% colnames(transactions)) {
+    stop(paste(payment_size_col, "not in the provided dataset. Check your input!"))
+  }
+
+  transaction_dataset <- transactions %>%
+    dplyr::mutate(.occurrence_period = ceiling(.data[[occurrence_time_col]]))
+  I <- max(transaction_dataset$.occurrence_period)
+  # ADJUSTMENT FOR PAYMENT TIMES
+  if (adjust == TRUE) {
+    for (i in 1:nrow(transaction_dataset)) {
+      if (transaction_dataset[i, payment_time_col] > transaction_dataset[i, ".occurrence_period"] + I - 1) {
+        transaction_dataset[i, payment_time_col] <- transaction_dataset[i, ".occurrence_period"] + I - 1
+      }
+    }
+  }
+  if (by_year == FALSE) {
+    # percent = % paid of total claims incurred in the same period
+    plot_data <- transaction_dataset %>%
+      dplyr::group_by(.data$.occurrence_period) %>%
+      dplyr::mutate(percent = .data[[payment_size_col]]/sum(.data[[payment_size_col]]))
+
+    plot_data <- plot_data %>%
+      dplyr::mutate(development = .data[[payment_time_col]] - .data[[occurrence_time_col]]) %>%
+      dplyr::arrange(.data$.occurrence_period, .data$development) %>%
+      dplyr::group_by(.data$.occurrence_period) %>%
+      dplyr::mutate(cum_percent = cumsum(.data$percent))
+
+    colour_count <- length(unique(plot_data$.occurrence_period)) # number of levels
+    get_palette <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "RdYlBu"))
+    ggplot(plot_data,
+           aes(x = .data$development, y = .data$cum_percent * 100,
+               colour = as.factor(.data$.occurrence_period))) +
+      ggplot2::geom_line() +
+      ggplot2::scale_colour_manual(values = get_palette(colour_count), name = "Occurrence period") +
+      ggplot2::labs(title = "Claims development for each of the occurrence periods",
+                    x = "Development time (continuous scale)",
+                    y = "Cumulative claim paid (%)") +
+      # ggplot2::xlim(0, I) +
+      ggplot2::guides(col = ggplot2::guide_legend(nrow = 2, byrow = TRUE,
+                                                  title.position = "top",
+                                                  title.hjust = 0.5)) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(plot.title = ggplot2::element_text(face = "bold"),
+                     legend.title = ggplot2::element_text(face = "bold"),
+                     legend.position = "bottom")
+  } else {
+    # plot by occurrence year
+    plot_data_yearly <- transaction_dataset %>%
+      dplyr::mutate(occurrence_year = ceiling(.data$.occurrence_period * .pkgenv$time_unit)) %>%
+      dplyr::group_by(.data$occurrence_year) %>%
+      dplyr::mutate(percent = .data[[payment_size_col]]/sum(.data[[payment_size_col]]))
+
+    plot_data_yearly <- plot_data_yearly %>%
+      dplyr::mutate(development = (.data[[payment_time_col]] - .data[[occurrence_time_col]]) * .pkgenv$time_unit) %>%
+      dplyr::arrange(.data$occurrence_year, .data$development) %>%
+      dplyr::group_by(.data$occurrence_year) %>%
+      dplyr::mutate(cum_percent = cumsum(.data$percent))
+
+    colour_count <- length(unique(plot_data_yearly$occurrence_year)) # number of levels
+    get_palette <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "RdYlBu"))
+    ggplot(plot_data_yearly,
+           aes(x = .data$development, y = .data$cum_percent * 100,
+               colour = as.factor(.data$occurrence_year))) +
+      ggplot2::geom_line() +
+      ggplot2::scale_colour_manual(values = get_palette(colour_count), name = "Occurrence year") +
+      ggplot2::labs(title = "Claims development for each of the occurrence years",
+                    x = "Development time (in years)",
+                    y = "Cumulative claim paid (%)") +
+      # ggplot2::xlim(0, I * .pkgenv$time_unit) +
+      ggplot2::guides(col = ggplot2::guide_legend(nrow = 2, byrow = TRUE,
+                                                  title.position = "top", title.hjust = 0.5)) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(plot.title = ggplot2::element_text(face = "bold"),
+                     legend.title = ggplot2::element_text(face = "bold"),
+                     legend.position = "bottom")
+  }
+}

@@ -1,5 +1,13 @@
 # SynthETIC
 
+# SynthETIC 1.0.3
+
+## New features {#new-features-1.0.3}
+
+* Adds `plot_transaction_dataset()` function for plotting claim development from
+a payment-level dataset, in addition to the `plot.claims` method that works only
+with a `claims` object.
+
 # SynthETIC 1.0.2
 
 ## Minor improvements and fixes 
