@@ -11,6 +11,11 @@ Avanzi, B., Taylor, G., Wang, M., Wong, B., 2021. `SynthETIC`: An individual ins
 
 A free copy is accessible via [arXiv:2008.05693](https://arxiv.org/abs/2008.05693).
 
+To cite this package in publications, please use:
+```
+citation("SynthETIC")
+```
+
 ## Install Package
 To install the [CRAN version of the package](https://CRAN.R-project.org/package=SynthETIC), do
 
