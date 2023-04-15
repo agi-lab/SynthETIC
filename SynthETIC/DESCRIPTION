@@ -1,6 +1,6 @@
 Package: SynthETIC
 Title: Synthetic Experience Tracking Insurance Claims
-Version: 1.0.3
+Version: 1.0.4
 Authors@R: c(
     person("Benjamin", "Avanzi", role = "aut", email = "b.avanzi@unimelb.edu.au"),
     person("Greg", "Taylor", role = "aut", email = "greg_taylor60@hotmail.com"),
@@ -38,8 +38,7 @@ Suggests:
     dplyr,
     RColorBrewer,
     actuar,
-    poisson,
-    ChainLadder
+    poisson
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)

@@ -1,5 +1,11 @@
 # SynthETIC
 
+# SynthETIC 1.0.4
+
+## Minor improvements and fixes 
+
+* Removes dependency (`Suggests`) on the `ChainLadder` package
+
 # SynthETIC 1.0.3
 
 ## New features {#new-features-1.0.3}
