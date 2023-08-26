@@ -1,5 +1,11 @@
 # SynthETIC
 
+# SynthETIC 1.0.5
+
+## Minor improvements and fixes 
+
+* Removes dependency (`Suggests`) on the `poisson` package
+
 # SynthETIC 1.0.4
 
 ## Minor improvements and fixes 
