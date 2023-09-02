@@ -13,7 +13,8 @@ Imports:
     ggplot2,
     magrittr,
     rlang,
-    methods
+    methods,
+    dplyr
 Description: Creation of an individual claims simulator which generates various
     features of non-life insurance claims. An initial set of test parameters,
     designed to mirror the experience of an Auto Liability portfolio, were set
@@ -35,7 +36,6 @@ RoxygenNote: 7.1.2
 Suggests: 
     knitr,
     rmarkdown,
-    dplyr,
     RColorBrewer,
     actuar
 VignetteBuilder: knitr
