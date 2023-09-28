@@ -4,7 +4,7 @@
 
 #' Construction of a `claims` Object
 #'
-#' Contructs a `claims` object which stores all the simulated quantities.
+#' Constructs a `claims` object which stores all the simulated quantities.
 #'
 #' @param frequency_vector a vector of claim frequencies for all the periods.
 #' @param occurrence_list list of claim occurrence times.

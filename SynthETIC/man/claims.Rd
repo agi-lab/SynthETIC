@@ -46,5 +46,5 @@ Returns a \code{claims} object (mainly a reformat of the arguments as a
 list object), with the 10 components as listed above.
 }
 \description{
-Contructs a \code{claims} object which stores all the simulated quantities.
+Constructs a \code{claims} object which stores all the simulated quantities.
 }
