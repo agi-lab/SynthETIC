@@ -40,4 +40,4 @@ Suggests:
     actuar
 VignetteBuilder: knitr
 Depends: 
-    R (>= 4.30)
+    R (>= 2.10)
