@@ -243,6 +243,8 @@ check_relativity <- function(factors, relativity) {
 ###############################################################################
 # Covariates Dataset
 ###############################################################################
+
+#' @export
 covariates_data <- function(covariates, data, covariates_id = NULL) {
 
     data <- as.data.frame(data)
@@ -289,6 +291,7 @@ check_covariates_data <- function(covariates, data, covariates_id) {
 # Calculating observation level relativities
 ###############################################################################
 
+#' @export
 covariates_relativity <- function(covariates_data, relativity = c("F", "R"),
                                   by_ids = FALSE) {
 
@@ -352,6 +355,7 @@ covariates_relativity <- function(covariates_data, relativity = c("F", "R"),
 # Covariates Simulation
 ###############################################################################
 
+#' @export
 simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_list = list(1)) {
 
     if (!missing(frequency_vector) & !missing(claim_size_list)) {
@@ -396,6 +400,7 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
 # Covariates Claim Size Adjustment
 ###############################################################################
 
+#' @export
 claim_size_adj <- function(covariates, claim_size) {
 
     covariates_data <- simulate_covariates(
@@ -413,6 +418,7 @@ claim_size_adj <- function(covariates, claim_size) {
     z
 }
 
+#' @export
 claim_size_adj.fit <- function(covariates_data, claim_size) {
     # Check covariates_data of correct object
     if (class(covariates_data) != "covariates_data") {
