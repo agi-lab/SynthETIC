@@ -20,8 +20,7 @@
 #' @details
 #' Creating a `covariates` object will provide template relativities for the
 #' frequency and severity relativities. It is encouraged to use the setter
-#' functions \code{\link{set.covariates_relativity_F}} and
-#' \code{\link{set.covariates_relativity_R}} to set these values to ensure that
+#' functions \code{\link{set.covariates_relativity}} to set these values to ensure that
 #' all necessary inputs are provided.
 #'
 #' @examples
@@ -37,8 +36,8 @@ covariates <- function(factors) {
 
   covariates <- list(
       factors = factors,
-      relativity_F = relativity_template(factors),
-      relativity_R = relativity_template(factors)
+      relativity_freq = relativity_template(factors),
+      relativity_sev = relativity_template(factors)
   )
 
   attr(covariates, "class") <- "covariates"
@@ -51,33 +50,35 @@ check_covariates_class <- function(covariates) {
     }
 }
 
-#' Sets the claim frequency relativity for a `covariates` object.
+#' Sets the claims relativity for a `covariates` object.
 #'
 #' @param covariates an object of type `covariates`. see \code{\link{covariates}}
 #' @param relativity see \code{\link{relativity_template}}
+#' @param freq_sev one of `"freq"` or `"sev"` to adjust frequency or severity
+#'  relativities respectively
 #'
 #' @return Returns a `covariates` object.
 #' @export
-set.covariates_relativity_F <- function(covariates, relativity) {
-    relativity <- as.data.frame(relativity)
-    check_covariates_class(covariates)
-    check_relativity(covariates$factors, relativity)
-    covariates$relativity_F <- relativity
-    return (covariates)
-}
+set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq", "sev")) {
 
-#' Sets the claim size relativity for a `covariates` object.
-#'
-#' @param covariates an object of type `covariates`. See \code{\link{covariates}}
-#' @param relativity see \code{\link{relativity_template}}
-#'
-#' @return Returns a `covariates` object.
-#' @export
-set.covariates_relativity_R <- function(covariates, relativity) {
+    if (missing(freq_sev)) {
+        stop('argument "freq_sev" is missing, with no default')
+    }
+
+    # Covariates check
     relativity <- as.data.frame(relativity)
     check_covariates_class(covariates)
     check_relativity(covariates$factors, relativity)
-    covariates$relativity_R <- relativity
+
+    # Set Frequency or Severity relativity
+    if (freq_sev == "freq") {
+        covariates$relativity_freq <- relativity
+    } else if (freq_sev == "sev") {
+        covariates$relativity_sev <- relativity
+    } else {
+        stop("Only relativity of type `freq` and `sev` is allowed.")
+    }
+
     return (covariates)
 }
 
@@ -292,21 +293,21 @@ check_covariates_data <- function(covariates, data, covariates_id) {
 ###############################################################################
 
 #' @export
-covariates_relativity <- function(covariates_data, relativity = c("F", "R"),
+covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
                                   by_ids = FALSE) {
 
     if (class(covariates_data) != "covariates_data") {
         stop("Input `covariates_data` is not of type `covariates_data`, see ?covariates_data")
     }
-    if (missing(relativity)) {
+    if (missing(freq_sev)) {
         stop('argument "relativity" is missing, with no default')
     }
-    if (relativity == "F") {
-        relativity <- covariates_data$covariates$relativity_F
-    } else if (relativity == "R") {
-        relativity <- covariates_data$covariates$relativity_R
+    if (freq_sev == "freq") {
+        relativity <- covariates_data$covariates$relativity_freq
+    } else if (freq_sev == "sev") {
+        relativity <- covariates_data$covariates$relativity_sev
     } else {
-        stop("Only relativity of type `F` and `R` is allowed.")
+        stop("Only relativity of type `freq` and `sev` is allowed.")
     }
     if (by_ids & is.null(covariates_data$ids)) {
         warning("No ids found in `covariates_data` when `by_ids` is TRUE.")
@@ -375,7 +376,7 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
         data = all_combinations,
         covariates_id = NULL
     )
-    all_relativities <- covariates_relativity(temp_covariates_data, relativity = "F")
+    all_relativities <- covariates_relativity(temp_covariates_data, freq_sev = "freq")
 
     covariates_sim <- stats::rmultinom(n, 1, all_relativities)
     covariates_id <- base::apply(
@@ -434,7 +435,7 @@ claim_size_adj.fit <- function(covariates_data, claim_size) {
     claim_size_vector <- unlist(claim_size)
     claim_relativities <- covariates_relativity(
         covariates_data,
-        relativity = "R",
+        freq_sev = "sev",
         by_ids = TRUE
     )
 

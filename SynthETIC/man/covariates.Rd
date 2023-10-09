@@ -21,8 +21,7 @@ Continuous covariates will have been discretized.
 \details{
 Creating a \code{covariates} object will provide template relativities for the
 frequency and severity relativities. It is encouraged to use the setter
-functions \code{\link{set.covariates_relativity_F}} and
-\code{\link{set.covariates_relativity_R}} to set these values to ensure that
+functions \code{\link{set.covariates_relativity}} to set these values to ensure that
 all necessary inputs are provided.
 }
 \examples{
