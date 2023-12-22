@@ -96,18 +96,21 @@ set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq
 #' and associated factors in vector form.
 #'
 #' @return Returns a dataframe object, with five columns:
-#'      - `factor_i` Factor i
-#'      - `factor_j` Factor j
-#'      - `level_ik` Level within Factor i
-#'      - `level_jl` Level within Factor j
-#'      - `relativity` Relativity between `level_ik` and `level_jl`,
+#' \itemize{
+#'      \item{} {`factor_i` Factor i}
+#'      \item{} {`factor_j` Factor j}
+#'      \item{} {`level_ik` Level within Factor i}
+#'      \item{} {`level_jl` Level within Factor j}
+#'      \item{} {`relativity` Relativity between `level_ik` and `level_jl`,}
 #'      defaults to `NA`
+#'  }
+#'
 #' @details
 #'
 #' Suppose that there are \eqn{m} covariates labelled \eqn{c_i}, \eqn{i=1,...,m},
 #' and that covariate \eqn{c_i} can assume one and only one of \eqn{n_i} values,
 #' \eqn{x_{ik}}, \eqn{k=1,...,n_i}. The total number of available covariate
-#' values is \eqn{n = \Sum_{i=1}^m n_o}.
+#' values is \eqn{n = \sum_{i=1}^m n_o}.
 #'
 #' Now set up an \eqn{n \times n} matrix \eqn{F}, consisting of sub-matrices
 #' \eqn{F_{ij}}, \eqn{i,j = 1, ... ,m} of dimension \eqn{n_i \times n_j}. The
@@ -120,6 +123,8 @@ set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq
 #' \eqn{f_{ii, kl} = 0} for \eqn{k \neq l}, and so \eqn{F_{ii}} is diagonal for
 #' all \eqn{i=1, ..., m}. Moreover, \eqn{f_{ij,kl} = f_{ji,lk}}, so that
 #' \eqn{F} is symmetric and \eqn{f_{ij,kl} > 0}.
+#'
+#' @examples ./data-raw/example_relativity_template.R
 #'
 #' @export
 relativity_template <- function(factors) {
@@ -402,7 +407,7 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
 ###############################################################################
 
 #' @export
-claim_size_adj <- function(covariates, claim_size) {
+claim_size_adj <- function(covariate_obj, claim_size) {
 
     covariates_data <- simulate_covariates(
         covariate_obj,

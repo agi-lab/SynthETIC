@@ -77,3 +77,17 @@
 #'   \item{payment_delay}{inter partial delay associated with the payment.}
 #' }
 "test_transaction_dataset"
+
+#' Covariates Object
+#'
+#' A list containing the frequency and severity relativities for three factors.
+#'
+#' @format A `covariates` object with 3 components:
+#' \describe{
+#'   \item{factors}{list; levels within each factor.}
+#'   \item{relativity_freq}{data.frame; first and second order frequency relativities between all the levels of each factor}
+#'   \item{relativity_sev}{data.frame; first and second order severity relativities between all the levels of each factor}
+#' }
+#' @examples
+#' test_covariates_object$factors
+"test_covariates_object"

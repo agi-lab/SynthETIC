@@ -12,12 +12,14 @@ and associated factors in vector form.}
 }
 \value{
 Returns a dataframe object, with five columns:
-- \code{factor_i} Factor i
-- \code{factor_j} Factor j
-- \code{level_ik} Level within Factor i
-- \code{level_jl} Level within Factor j
-- \code{relativity} Relativity between \code{level_ik} and \code{level_jl},
+\itemize{
+\item{} {\code{factor_i} Factor i}
+\item{} {\code{factor_j} Factor j}
+\item{} {\code{level_ik} Level within Factor i}
+\item{} {\code{level_jl} Level within Factor j}
+\item{} {\code{relativity} Relativity between \code{level_ik} and \code{level_jl},}
 defaults to \code{NA}
+}
 }
 \description{
 Constructs a template for the covariate relativities based on the
@@ -28,7 +30,7 @@ relativity is needed for each factor pair.
 Suppose that there are \eqn{m} covariates labelled \eqn{c_i}, \eqn{i=1,...,m},
 and that covariate \eqn{c_i} can assume one and only one of \eqn{n_i} values,
 \eqn{x_{ik}}, \eqn{k=1,...,n_i}. The total number of available covariate
-values is \eqn{n = \Sum_{i=1}^m n_o}.
+values is \eqn{n = \sum_{i=1}^m n_o}.
 
 Now set up an \eqn{n \times n} matrix \eqn{F}, consisting of sub-matrices
 \eqn{F_{ij}}, \eqn{i,j = 1, ... ,m} of dimension \eqn{n_i \times n_j}. The
@@ -41,4 +43,25 @@ respectively. Since \eqn{c_i} can assume only one of the values \eqn{x_ik},
 \eqn{f_{ii, kl} = 0} for \eqn{k \neq l}, and so \eqn{F_{ii}} is diagonal for
 all \eqn{i=1, ..., m}. Moreover, \eqn{f_{ij,kl} = f_{ji,lk}}, so that
 \eqn{F} is symmetric and \eqn{f_{ij,kl} > 0}.
+}
+\examples{
+relativity_freq <- relativity_template(factors)
+
+# Default Values
+relativity_freq$relativity <- c(
+    1, 1,
+    0.95, 1, 1, 1, 1, 1,
+    0.05, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    0.53, 0.3, 0.1, 0.05, 0.01, 0.01,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    0.183, 0.192, 0.274, 0.18, 0.171
+)
+
 }
