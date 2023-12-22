@@ -22,6 +22,7 @@ Useful links:
 Authors:
 \itemize{
   \item Benjamin Avanzi \email{b.avanzi@unimelb.edu.au}
+  \item William Ho \email{ho.w@unimelb.edu.au}
   \item Greg Taylor \email{greg_taylor60@hotmail.com}
   \item Bernard Wong \email{bernard.wong@unsw.edu.au}
 }

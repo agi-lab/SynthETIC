@@ -2,7 +2,7 @@
 title: "The Inclusion of Claim Covariates in the Generation of SynthETIC Claims"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Use of SynthETIC to Generate Individual Claims of Realistic Features}
+  %\VignetteIndexEntry{The Inclusion of Claim Covariates in the Generation of SynthETIC Claims}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -69,7 +69,7 @@ Applying Covariates
 To apply simulated covariates to `SynthETIC` claim sizes, a `covariates` is used in conjunction with the `claim_size_adj()` function to both simulate covariate combinations and apply adjusted claim sizes.
 
 ```{r}
-covariates_obj <- SynthETIC::test_covariates_object
+covariates_obj <- SynthETIC::covariates_obj
 claim_size_covariates <- claim_size_adj(covariates_obj, claim_sizes)
 covariates_data_obj <- claim_size_covariates$covariates_data
 claim_size_w_cov <- claim_size_covariates$claim_size_adj
@@ -190,7 +190,7 @@ tmp_data <- data.frame(
 colnames(tmp_data) <- c("Vehicle Type", "Business Use")
 
 covariates_data_tmp <- covariates_data(
-    covariate_obj_tmp, 
+    covariates_obj_tmp, 
     data = tmp_data, 
     covariates_id = list(c(100:51, 1:50))
 )

@@ -124,7 +124,7 @@ set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq
 #' all \eqn{i=1, ..., m}. Moreover, \eqn{f_{ij,kl} = f_{ji,lk}}, so that
 #' \eqn{F} is symmetric and \eqn{f_{ij,kl} > 0}.
 #'
-#' @examples ./data-raw/example_relativity_template.R
+#' @example data-raw/example_relativity_template.R
 #'
 #' @export
 relativity_template <- function(factors) {

@@ -89,5 +89,5 @@
 #'   \item{relativity_sev}{data.frame; first and second order severity relativities between all the levels of each factor}
 #' }
 #' @examples
-#' test_covariates_object$factors
-"test_covariates_object"
+#' covariates_obj$factors
+"covariates_obj"
