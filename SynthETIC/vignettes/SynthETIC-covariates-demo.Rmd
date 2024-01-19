@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette aims to illustrate how the inclusion of covariates can influence the severity of the claims generated using the `SynthETIC` package. The distributional assumptions shown in this vignette are consistent with the default assumptions of the `SynthETIC` package (an Auto Liability portfolio). The inclusion of covariates aims to be a minor adjustment step to modelled claim sizes after Step 2: *Claim size* discussed in the [`SynthETIC-demo` vignette](SynthETIC-demo.html).
+This vignette aims to illustrate how the inclusion of covariates can influence the severity of the claims generated using the `SynthETIC` package. The distributional assumptions shown in this vignette are consistent with the default assumptions of the `SynthETIC` package (an Auto Liability portfolio). The inclusion of covariates aims to be a minor adjustment step to modelled claim sizes after Step 2: *Claim size* discussed in the [`SynthETIC-demo` vignette](https://cran.r-project.org/web/packages/SynthETIC/vignettes/SynthETIC-demo.html).
 
 In particular, with this demo we will construct:
 
@@ -28,10 +28,19 @@ Covariate Outputs               `covariates_data_obj` = dataset of assigned cova
 *S_adj*, claim size             `claim_size_w_cov[[i]]` = claim size for all claims that occurred in period *i* after adjustment for covariates
 ------------------------------------------------------------------------------------------
 
+Reference
+---
+
+To cite this package in publications, please use:
+
+```{r, eval=FALSE}
+citation("SynthETIC")
+```
+
 `SynthETIC` Set Up
 ---
 
-We set up package-wise global parameters demonstrated in the [`SynthETIC-demo` vignette](SynthETIC-demo.html) and perform modelling Steps 1 and 2 to generate the claim frequency and claim sizes under the default assumptions. Note that changing these assumptions for Steps 1 and 2 do not affect how covariates are implemented.
+We set up package-wise global parameters demonstrated in the `SynthETIC-demo` vignette (which can be accessed via `vignette("SynthETIC-demo", package = "SynthETIC")` or [online](https://cran.r-project.org/web/packages/SynthETIC/vignettes/SynthETIC-demo.html)) and perform modelling Steps 1 and 2 to generate the claim frequency and claim sizes under the default assumptions. Note that changing these assumptions for Steps 1 and 2 do not affect how covariates are implemented.
 
 ```{r}
 library(SynthETIC)
@@ -67,7 +76,7 @@ claim_size_w_cov <- claim_size_covariates$claim_size_adj
 Modelling Steps 3-5
 ---
 
-Just as in Steps 1-2, Steps 3 onwards also do not require any specific adjustment in relation to implementing covariates. Guidance on implementing these modelling steps can be found in the [`SynthETIC-demo` vignette](SynthETIC-demo.html). We can see from the example below that the inclusion of covariates primarily has an impact on claim sizes and thus any following modelling steps that are also impacted from the adjusted claim sizes. Note that the number of claims (`n_vector`) and the time at which they occur (`occurrence_times`) are unaffected by covariates.
+Just as in Steps 1-2, Steps 3 onwards also do not require any specific adjustment in relation to implementing covariates. Guidance on implementing these modelling steps can be found in the `SynthETIC-demo` vignette. We can see from the example below that the inclusion of covariates primarily has an impact on claim sizes and thus any following modelling steps that are also impacted from the adjusted claim sizes. Note that the number of claims (`n_vector`) and the time at which they occur (`occurrence_times`) are unaffected by covariates.
 
 ```{r}
 generate_claims_dataset <- function(claim_size_list) {
