@@ -28,17 +28,6 @@ Covariate Outputs               `covariates_data_obj` = dataset of assigned cova
 *S_adj*, claim size             `claim_size_w_cov[[i]]` = claim size for all claims that occurred in period *i* after adjustment for covariates
 ------------------------------------------------------------------------------------------
 
-Reference
----
-For a full description of `SythETIC`'s covariates module, readers should refer to:
-
-XXX_TO_BE_INPUTTED_XXX (WORK IN PROGRESS)
-
-To cite this package in publications, please use:
-```{r, eval=FALSE}
-citation("SynthETIC_cov")
-```
-
 `SynthETIC` Set Up
 ---
 
@@ -69,8 +58,8 @@ Applying Covariates
 To apply simulated covariates to `SynthETIC` claim sizes, a `covariates` is used in conjunction with the `claim_size_adj()` function to both simulate covariate combinations and apply adjusted claim sizes.
 
 ```{r}
-covariates_obj <- SynthETIC::covariates_obj
-claim_size_covariates <- claim_size_adj(covariates_obj, claim_sizes)
+test_covariates_obj <- SynthETIC::test_covariates_obj
+claim_size_covariates <- claim_size_adj(test_covariates_obj, claim_sizes)
 covariates_data_obj <- claim_size_covariates$covariates_data
 claim_size_w_cov <- claim_size_covariates$claim_size_adj
 ```
@@ -107,14 +96,15 @@ head(claim_dataset)
 head(claim_dataset_w_cov)
 ```
 
-Simulating the Effects of Different Covariates (WORK IN PROGRESS)
+Appendix 1: Using Different Sets of Covariates
 ---
 
-Temporary note: random numbers (very) loosely (and partially guess-work) backed by:
-(https://www.abs.gov.au/statistics/industry/tourism-and-transport/survey-motor-vehicle-use-australia/latest-release)
-(https://www.abs.gov.au/statistics/industry/tourism-and-transport/sales-new-motor-vehicles/latest-release#data-downloads)
+This section shows the impact of using a set of covariates different than the default values within the `SynthETIC` package.
 
-This part of vignette is moreso a proof of concept to use different covariates.
+The included framework allows a user to easily construct any set of covariates required for simulation and/or analysis. This gives the user flexibility in choosing both the number of factors in the set of covariates and the number of levels within each factor. 
+
+The below example compares the default, set of three covariates included with `SynthETIC`, with the a different set of two covariates related to vehicle type and vehicle use-case (an example more relevant if studying motor claims.)
+
 
 ```{r}
 factors_tmp <- list(
@@ -144,61 +134,72 @@ relativity_sev_tmp$relativity <- c(
     2, 0.5
 )
 
-covariates_obj_tmp <- covariates(factors_tmp)
-covariates_obj_tmp <- set.covariates_relativity(
-    covariates = covariates_obj_tmp, 
+test_covariates_obj_veh <- covariates(factors_tmp)
+test_covariates_obj_veh <- set.covariates_relativity(
+    covariates = test_covariates_obj_veh, 
     relativity = relativity_freq_tmp, 
     freq_sev = "freq"
 )
-covariates_obj_tmp <- set.covariates_relativity(
-    covariates = covariates_obj_tmp, 
+test_covariates_obj_veh <- set.covariates_relativity(
+    covariates = test_covariates_obj_veh, 
     relativity = relativity_sev_tmp, 
     freq_sev = "sev"
 )
 
-claim_size_covariates_tmp <- claim_size_adj(covariates_obj_tmp, claim_sizes)
+claim_size_covariates_veh <- claim_size_adj(test_covariates_obj_veh, claim_sizes)
 
-cbind(
-    head(claim_size_covariates$covariates_data$data)
-    ,head(claim_size_covariates$claim_size_adj[[1]])
+# Comparison of the same claim size except with adjustments due to covariates
+data.frame(
+    Claim_Size = head(round(claim_sizes[[1]]))
+    ,Claim_Size_Original_Covariates = head(round(claim_size_covariates$claim_size_adj[[1]]))
+    ,Claim_Size_New_Covariates = head(round(claim_size_covariates_veh$claim_size_adj[[1]]))
 )
 
-cbind(
-    head(claim_size_covariates_tmp$covariates_data$data)
-    ,head(claim_size_covariates_tmp$claim_size_adj[[1]])
-)
+# Covariate Levels
+head(claim_size_covariates$covariates_data$data)
+head(claim_size_covariates_veh$covariates_data$data)
+
 ```
 
 
-Using Known Covariates Values (WORK IN PROGRESS)
+Appendix 2: Applying Known Covariate Values.
 ---
 
-If covariate values for each claim occurrence was known, then we can directly use them in adjusting claim sizes. E.g. in this instance, the first 50 claims always belonged to `Passenger`, next 50 claims belonged to `Light Commerical`.
+To apply specific covariate values for each claim occurrence, we can use the parameter `covariates_id` when constructing the `covariates_data` object. 
+This would map the each claim to a corresponding known covariate value from a dataset and apply the relevant severity relativities. Note that in this case, the frequency relativities would not be used, as no simulation of covariate values are performed.
+
+In the example below, we have a known dataset of covariates, which can be mapped to each of the claim sizes. In the covariates dataset, we know:
+
+- The first 25 rows are *Passenger* vehicles not for *Business Use*
+- The next 25 rows are *Light Commercial* vehicles not for *Business Use*
+- The next 25 rows are *Passenger* vehicles for *Business Use*
+- The last 25 rows are *Light Commercial* vehicles for *Business Use*
+
+As a result, we can use the indices for each of these rows to map each set of covariates to its associated claim. In this case, the first 50 claims are related to the last 50 rows in the covariates dataset in reverse order, and claims 51--100 are related to the first 50 rows in the covariates dataset.
 
 ```{r}
-claim_sizes_tmp <- list(c(
-    rexp(n = 25, rate = 1),
-    rgamma(n = 25, shape = 1.5),
-    rexp(n = 25, rate = 1.25),
-    rgamma(n = 25, shape = 2)
+claim_sizes_known <- list(c(
+    rexp(n = 100, rate = 1.5)
 ))
 
-tmp_data <- data.frame(
+known_covariates_dataset <- data.frame(
     "Vehicle Type" = rep(rep(c("Passenger", "Light Commerical"), each = 25), times = 2),
     "Business Use" = c(rep("N", times = 50), rep("Y", times = 50))
 )
-colnames(tmp_data) <- c("Vehicle Type", "Business Use")
+colnames(known_covariates_dataset) <- c("Vehicle Type", "Business Use")
 
-covariates_data_tmp <- covariates_data(
-    covariates_obj_tmp, 
-    data = tmp_data, 
+covariates_data_veh <- covariates_data(
+    test_covariates_obj_veh, 
+    data = known_covariates_dataset, 
     covariates_id = list(c(100:51, 1:50))
 )
 
 claim_sizes_adj_tmp <- claim_size_adj.fit(
-    covariates_data = covariates_data_tmp,
-    claim_size = claim_sizes_tmp
+    covariates_data = covariates_data_veh,
+    claim_size = claim_sizes_known
 )
+
+head(claim_sizes_adj_tmp[[1]])
 
 ```
 

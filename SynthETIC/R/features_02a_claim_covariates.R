@@ -44,6 +44,7 @@ covariates <- function(factors) {
   covariates
 }
 
+#' @noRd
 check_covariates_class <- function(covariates) {
     if (class(covariates) != "covariates") {
         stop("Input `covariates` is not of type `covariates`, see ?covariates.")
@@ -250,6 +251,16 @@ check_relativity <- function(factors, relativity) {
 # Covariates Dataset
 ###############################################################################
 
+#' Construction of a `covariates_data` Object
+#'
+#' Constructs a `covariates_data` object which stores the dataset of known covariate levels of each factor.
+#'
+#' @param covariates a `covariates` object
+#' @param data a dataset of covariate values, with columns equal to each of the covariate factors and rows related to individual claim observations.
+#' @param covariates_id optional list of list of ids, in the same format as a \code{\link{claim_size}} output. Also see \code{\link{to_SynthETIC}}. Defaults to \code{NULL}.
+#'
+#' @return Returns a `covariates_data` object.
+#'
 #' @export
 covariates_data <- function(covariates, data, covariates_id = NULL) {
 
@@ -266,6 +277,7 @@ covariates_data <- function(covariates, data, covariates_id = NULL) {
     covariates_data
 }
 
+#' @noRd
 check_covariates_data <- function(covariates, data, covariates_id) {
 
     check_covariates_class(covariates)
@@ -297,6 +309,14 @@ check_covariates_data <- function(covariates, data, covariates_id) {
 # Calculating observation level relativities
 ###############################################################################
 
+#' Calculates Relativities
+#'
+#' Calculates the relativities (`freq` or `sev`) of a set of covariate values.
+#'
+#' @param covariates_data a `covariates_data` object
+#' @param freq_sev one of `freq` or `sev` to calculate the frequency or severity relativity respectively.
+#' @param by_ids optional boolean to calculate reorder the result based off claim observations instead of observations in the covariates dataset. Defaults to FALSE.
+#'
 #' @export
 covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
                                   by_ids = FALSE) {
@@ -361,6 +381,14 @@ covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
 # Covariates Simulation
 ###############################################################################
 
+#' Covariates Simulation
+#'
+#' Simulates covariates for each claim. The relative occurrence of each combination of covariates is given the frequency relativities of the covariates.
+#'
+#' @param covariates a `covariates` object
+#' @param frequency_vector a vector in the same output as \code{\link{claim_frequency}}.
+#' @param claim_size_list optional if `frequency_vector` is not inputted. A list in the same output as \code{\link{claim_size}}.
+#'
 #' @export
 simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_list = list(1)) {
 
@@ -406,6 +434,13 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
 # Covariates Claim Size Adjustment
 ###############################################################################
 
+#' Covariates Claim Size Adjustment
+#'
+#' Adjusts claim sizes given a set of covariates. Note that this function firstly simulates covariate levels for each claim, see \code{\link{simulate_covariates}}.
+#'
+#' @param covariate_obj a `covariates` object
+#' @param claim_size a list in the same output as \code{\link{claim_size}}
+#'
 #' @export
 claim_size_adj <- function(covariate_obj, claim_size) {
 
@@ -424,6 +459,13 @@ claim_size_adj <- function(covariate_obj, claim_size) {
     z
 }
 
+#' Covariates Claim Size Adjustment
+#'
+#' Adjusts claim sizes given the covariates related to each claim. The relative adjustment of each claim size is given by the severity relativities of the covariates.
+#'
+#' @param covariates_data a `covariates_data` object
+#' @param claim_size a list in the same output as \code{\link{claim_size}}
+#'
 #' @export
 claim_size_adj.fit <- function(covariates_data, claim_size) {
     # Check covariates_data of correct object

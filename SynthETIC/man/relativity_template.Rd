@@ -90,17 +90,17 @@ relativity_sev$relativity <- c(
 head(relativity_freq)
 head(relativity_sev)
 
-covariates_obj <- covariates(factors)
-covariates_obj <- set.covariates_relativity(
-    covariates = covariates_obj,
+test_covariates_obj <- covariates(factors)
+test_covariates_obj <- set.covariates_relativity(
+    covariates = test_covariates_obj,
     relativity = relativity_freq,
     freq_sev = "freq"
 )
-covariates_obj <- set.covariates_relativity(
-    covariates = covariates_obj,
+test_covariates_obj <- set.covariates_relativity(
+    covariates = test_covariates_obj,
     relativity = relativity_sev,
     freq_sev = "sev"
 )
 
-usethis::use_data(covariates_obj, overwrite = TRUE)
+usethis::use_data(test_covariates_obj, overwrite = TRUE)
 }
