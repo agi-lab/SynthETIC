@@ -55,4 +55,3 @@ test_covariates_obj <- set.covariates_relativity(
     freq_sev = "sev"
 )
 
-usethis::use_data(test_covariates_obj, overwrite = TRUE)

@@ -30,8 +30,15 @@ S_df <- function(s) {
 }
 
 # Apply Covariates
-test_claim_sizes_adj <- claim_size_adj(SynthETIC::test_covariates_obj, claim_size(n_vector, S_df, type = "p", range = c(0, 1e24)))
+source("./data-raw/example_relativity_template.R")
+usethis::use_data(test_covariates_obj, overwrite = TRUE)
+
+test_claim_sizes_adj <- claim_size_adj(
+    test_covariates_obj,
+    claim_size(n_vector, S_df, type = "p", range = c(0, 1e24))
+)
 test_covariates_dataset <- test_claim_sizes_adj$covariates_data
+
 usethis::use_data(test_covariates_dataset, overwrite = TRUE)
 
 claim_sizes <- test_claim_sizes_adj$claim_size_adj

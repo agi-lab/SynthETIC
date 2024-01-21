@@ -46,7 +46,7 @@ covariates <- function(factors) {
 
 #' @noRd
 check_covariates_class <- function(covariates) {
-    if (class(covariates) != "covariates") {
+    if (!isa(covariates, "covariates")) {
         stop("Input `covariates` is not of type `covariates`, see ?covariates.")
     }
 }
@@ -321,7 +321,7 @@ check_covariates_data <- function(covariates, data, covariates_id) {
 covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
                                   by_ids = FALSE) {
 
-    if (class(covariates_data) != "covariates_data") {
+    if (!isa(covariates_data, "covariates_data")) {
         stop("Input `covariates_data` is not of type `covariates_data`, see ?covariates_data")
     }
     if (missing(freq_sev)) {
@@ -469,7 +469,7 @@ claim_size_adj <- function(covariate_obj, claim_size) {
 #' @export
 claim_size_adj.fit <- function(covariates_data, claim_size) {
     # Check covariates_data of correct object
-    if (class(covariates_data) != "covariates_data") {
+    if (!isa(covariates_data, "covariates_data")) {
         stop("Input `covariates_data` is not of type `covariates_data`, see ?covariates_data")
     }
 
