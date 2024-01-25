@@ -140,7 +140,7 @@ relativity_sev_tmp$relativity <- c(
     1, 1,
     1, 1,
     1, 1,
-    2, 0.5
+    1.3, 1
 )
 
 test_covariates_obj_veh <- covariates(factors_tmp)
