@@ -64,13 +64,30 @@ claim_sizes <- claim_size(frequency_vector = n_vector)
 Applying Covariates
 ---
 
-To apply simulated covariates to `SynthETIC` claim sizes, a `covariates` is used in conjunction with the `claim_size_adj()` function to both simulate covariate combinations and apply adjusted claim sizes.
+To apply simulated covariates to `SynthETIC` claim sizes, a `covariates` is used in conjunction with the `claim_size_adj()` function to both simulate covariate combinations and apply adjusted claim sizes. The example `covariates` object below includes relativities for
+
+1. the legal representation of the claim
+2. the injury severity score
+3. the age of the claimant.
 
 ```{r}
 test_covariates_obj <- SynthETIC::test_covariates_obj
+print(test_covariates_obj)
+```
+
+The `claim_size_adj()` function simulates the covariate levels for each claim and then adjusts the claim sizes according to the relativities defined above. The covariate levels for each claim can be accessed in the `covariates_data$data` attribute of the function output.
+
+```{r}
 claim_size_covariates <- claim_size_adj(test_covariates_obj, claim_sizes)
 covariates_data_obj <- claim_size_covariates$covariates_data
+head(data.frame(covariates_data_obj$data))
+```
+
+The adjusted claim sizes are stored in the `claim_size_adj` attribute.
+
+```{r}
 claim_size_w_cov <- claim_size_covariates$claim_size_adj
+claim_size_w_cov[[1]]
 ```
 
 Modelling Steps 3-5
@@ -112,7 +129,11 @@ This section shows the impact of using a set of covariates different than the de
 
 The included framework allows a user to easily construct any set of covariates required for simulation and/or analysis. This gives the user flexibility in choosing both the number of factors in the set of covariates and the number of levels within each factor. 
 
-The below example compares the default, set of three covariates included with `SynthETIC`, with the a different set of two covariates related to vehicle type and vehicle use-case (an example more relevant if studying motor claims.)
+The below example compares
+
+- the default data set (without any covariate adjustments)
+- an example set of three covariates included with `SynthETIC`
+- a custom set of two covariates related to vehicle type and vehicle use-case (an example more relevant if studying motor claims).
 
 
 ```{r}
@@ -171,7 +192,7 @@ head(claim_size_covariates_veh$covariates_data$data)
 ```
 
 
-Appendix 2: Applying Known Covariate Values.
+Appendix 2: Applying Known Covariate Values
 ---
 
 To apply specific covariate values for each claim occurrence, we can use the parameter `covariates_id` when constructing the `covariates_data` object. 
