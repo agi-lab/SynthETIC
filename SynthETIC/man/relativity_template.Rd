@@ -12,13 +12,12 @@ and associated factors in vector form.}
 }
 \value{
 Returns a dataframe object, with five columns:
-\itemize{
-\item{} {\code{factor_i} Factor i}
-\item{} {\code{factor_j} Factor j}
-\item{} {\code{level_ik} Level within Factor i}
-\item{} {\code{level_jl} Level within Factor j}
-\item{} {\code{relativity} Relativity between \code{level_ik} and \code{level_jl},}
-defaults to \code{NA}
+\tabular{ll}{
+\code{factor_i} \tab Factor i. \cr
+\code{factor_j} \tab Factor j. \cr
+\code{level_ik} \tab Level within Factor i. \cr
+\code{level_jl} \tab Level within Factor j. \cr
+\code{relativity} \tab Relativity between \code{level_ik} and \code{level_jl}, defaults to \code{NA}.
 }
 }
 \description{

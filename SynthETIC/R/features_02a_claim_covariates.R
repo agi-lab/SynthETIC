@@ -98,14 +98,13 @@ set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq
 #' and associated factors in vector form.
 #'
 #' @return Returns a dataframe object, with five columns:
-#' \itemize{
-#'      \item{} {`factor_i` Factor i}
-#'      \item{} {`factor_j` Factor j}
-#'      \item{} {`level_ik` Level within Factor i}
-#'      \item{} {`level_jl` Level within Factor j}
-#'      \item{} {`relativity` Relativity between `level_ik` and `level_jl`,}
-#'      defaults to `NA`
-#'  }
+#' \tabular{ll}{
+#' `factor_i` \tab Factor i. \cr
+#' `factor_j` \tab Factor j. \cr
+#' `level_ik` \tab Level within Factor i. \cr
+#' `level_jl` \tab Level within Factor j. \cr
+#' `relativity` \tab Relativity between `level_ik` and `level_jl`, defaults to `NA`.
+#' }
 #'
 #' @details
 #'
