@@ -11,11 +11,14 @@ simulate_covariates(
 )
 }
 \arguments{
-\item{covariates}{a \code{covariates} object}
+\item{covariates}{a \code{\link{covariates}} object, which stores the frequency and severity relativities for given covariate levels.}
 
 \item{frequency_vector}{a vector in the same output as \code{\link{claim_frequency}}.}
 
 \item{claim_size_list}{optional if \code{frequency_vector} is not inputted. A list in the same output as \code{\link{claim_size}}.}
+}
+\value{
+Returns a \code{\link{covariates_data}} object.
 }
 \description{
 Simulates covariates for each claim. The relative occurrence of each combination of covariates is given the frequency relativities of the covariates.

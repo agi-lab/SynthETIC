@@ -11,7 +11,7 @@ covariates_relativity(
 )
 }
 \arguments{
-\item{covariates_data}{a \code{covariates_data} object}
+\item{covariates_data}{a \code{\link{covariates_data}} object}
 
 \item{freq_sev}{one of \code{freq} or \code{sev} to calculate the frequency or severity relativity respectively.}
 

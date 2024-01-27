@@ -7,9 +7,16 @@
 claim_size_adj(covariate_obj, claim_size)
 }
 \arguments{
-\item{covariate_obj}{a \code{covariates} object}
+\item{covariate_obj}{a \code{\link{covariates}} object}
 
 \item{claim_size}{a list in the same output as \code{\link{claim_size}}}
+}
+\value{
+Returns a nested named list:
+\itemize{
+\item \code{covariates_data} which is a named list of covariate relativities (\code{\link{covariates}}), the simulated covariate levels (\code{data}) and the claim IDs.
+\item \code{claim_size_adj} which is a list of adjusted claim sizes such that the \eqn{i}th component of the list gives the sizes for all claims that occurred in period \eqn{i}.
+}
 }
 \description{
 Adjusts claim sizes given a set of covariates. Note that this function firstly simulates covariate levels for each claim, see \code{\link{simulate_covariates}}.

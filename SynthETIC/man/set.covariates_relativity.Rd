@@ -7,7 +7,7 @@
 set.covariates_relativity(covariates, relativity, freq_sev = c("freq", "sev"))
 }
 \arguments{
-\item{covariates}{an object of type \code{covariates}. see \code{\link{covariates}}}
+\item{covariates}{an object of type \code{covariates}, see \code{\link{covariates}}}
 
 \item{relativity}{see \code{\link{relativity_template}}}
 
@@ -19,4 +19,7 @@ Returns a \code{covariates} object.
 }
 \description{
 Sets the claims relativity for a \code{covariates} object.
+}
+\seealso{
+\code{\link{covariates}}, \code{\link{relativity_template}}
 }
