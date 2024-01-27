@@ -782,7 +782,7 @@ unif_payment_size <- function(n, claim_size) {
   prop <- runif(n)
   prop.normalised <- prop / sum(prop)
   
-  return(claim_size * prop)
+  return(claim_size * prop.normalised)
 }
 
 ## output

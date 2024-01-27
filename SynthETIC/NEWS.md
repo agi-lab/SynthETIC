@@ -1,5 +1,25 @@
 # SynthETIC
 
+# SynthETIC 1.1.0
+
+## Inclusion of `claim_covariates` sub-module
+
+* Extends the package by including support for covariates and their impact on 
+claim sizes.
+
+* Includes one new vignette, demonstrating the sub-module and its use-cases.
+
+* Includes five new data objects. The three existing datasets 
+`test_claims_object`, `test_claim_dataset` and `test_transaction_dataset` now 
+also have a version where outputs are impacted by the effect of covariates. A
+`test_covariates_obj` and `test_covariates_dataset` have been included which
+provide information regarding the specific factors and levels of covariates used
+in relation to each claim.
+
+## Minor improvements and fixes 
+
+* Updates citation
+
 # SynthETIC 1.0.5
 
 ## Minor improvements and fixes 

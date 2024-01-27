@@ -77,3 +77,57 @@
 #'   \item{payment_delay}{inter partial delay associated with the payment.}
 #' }
 "test_transaction_dataset"
+
+#' Covariates Object
+#'
+#' A list containing the frequency and severity relativities for three factors.
+#'
+#' @format A `covariates` object with 3 components:
+#' \describe{
+#'   \item{factors}{list; levels within each factor.}
+#'   \item{relativity_freq}{data.frame; first and second order frequency relativities between all the levels of each factor}
+#'   \item{relativity_sev}{data.frame; first and second order severity relativities between all the levels of each factor}
+#' }
+#' @examples
+#' test_covariates_obj$factors
+"test_covariates_obj"
+
+
+#' Covariates Data Object
+#'
+#' An object detailing the set of covariates for each claim in the default setting of `SynthETIC`.
+#'
+#' @format A `covariates_data` object with 3 components:
+#' \describe{
+#'   \item{data}{data.frame; a dataset of covariate levels}
+#'   \item{covariates}{covariates; a `covariates` object}
+#'   \item{ids}{list; indices of the covariate-level dataset for each claim}
+#' }
+#' @examples
+#' test_covariates_dataset$data
+"test_covariates_dataset"
+
+#' Claims Data in List Format
+#'
+#' The `test_claims_object` where the default set of covariates have been applied to adjust claim sizes.
+#'
+#' @examples
+#' test_claims_object$frequency_vector
+"test_claims_object_cov"
+
+
+#' Claims Dataset
+#'
+#' The `test_claim_dataset` where the default set of covariates have been applied to adjust claim sizes.
+#'
+#' @examples
+#' # see a distribution of payment counts
+#' table(test_claim_dataset_cov$no_payment)
+"test_claim_dataset_cov"
+
+
+#' Transactions Dataset
+#'
+#' The `test_transaction_dataset` where the default set of covariates have been applied to adjust claim sizes.
+#'
+"test_transaction_dataset_cov"
