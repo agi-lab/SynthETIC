@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette aims to illustrate how the inclusion of covariates can influence the severity of the claims generated using the `SynthETIC` package. The distributional assumptions shown in this vignette are consistent with the default assumptions of the `SynthETIC` package (an Auto Liability portfolio). The inclusion of covariates aims to be a minor adjustment step to modelled claim sizes after Step 2: *Claim size* discussed in the [`SynthETIC-demo` vignette](https://cran.r-project.org/web/packages/SynthETIC/vignettes/SynthETIC-demo.html).
+This vignette aims to illustrate how the inclusion of covariates can influence the severity of the claims generated using the `SynthETIC` package. The distributional assumptions shown in this vignette are consistent with the default assumptions of the `SynthETIC` package (an Auto Liability portfolio). The inclusion of covariates aims to be a minor adjustment step to modelled claim sizes after Step 2: *Claim size* discussed in the [`SynthETIC-demo` vignette](https://CRAN.R-project.org/package=SynthETIC).
 
 In particular, with this demo we will construct:
 
@@ -40,7 +40,7 @@ citation("SynthETIC")
 `SynthETIC` Set Up
 ---
 
-We set up package-wise global parameters demonstrated in the `SynthETIC-demo` vignette (which can be accessed via `vignette("SynthETIC-demo", package = "SynthETIC")` or [online](https://cran.r-project.org/web/packages/SynthETIC/vignettes/SynthETIC-demo.html)) and perform modelling Steps 1 and 2 to generate the claim frequency and claim sizes under the default assumptions. Note that changing these assumptions for Steps 1 and 2 do not affect how covariates are implemented.
+We set up package-wise global parameters demonstrated in the `SynthETIC-demo` vignette (which can be accessed via `vignette("SynthETIC-demo", package = "SynthETIC")` or [online documentation](https://CRAN.R-project.org/package=SynthETIC)) and perform modelling Steps 1 and 2 to generate the claim frequency and claim sizes under the default assumptions. Note that changing these assumptions for Steps 1 and 2 do not affect how covariates are implemented.
 
 ```{r}
 library(SynthETIC)
