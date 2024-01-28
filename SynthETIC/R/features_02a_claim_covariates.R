@@ -388,9 +388,17 @@ covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
 #' @param covariates a `covariates` object
 #' @param frequency_vector a vector in the same output as \code{\link{claim_frequency}}.
 #' @param claim_size_list optional if `frequency_vector` is not inputted. A list in the same output as \code{\link{claim_size}}.
+#' @param random_seed optional seed for random number generation for
+#' reproducibility.
 #'
 #' @export
-simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_list = list(1)) {
+simulate_covariates <- function(
+        covariates,
+        frequency_vector = 1,
+        claim_size_list = list(1),
+        random_seed = NULL
+) {
+    set.seed(random_seed)
 
     if (!missing(frequency_vector) & !missing(claim_size_list)) {
         stop("specify 'frequency_vector' or 'claim_size_list' but not both")
@@ -440,9 +448,11 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
 #'
 #' @param covariate_obj a `covariates` object
 #' @param claim_size a list in the same output as \code{\link{claim_size}}
+#' @param random_seed optional seed for random number generation for
+#' reproducibility.
 #'
 #' @export
-claim_size_adj <- function(covariate_obj, claim_size) {
+claim_size_adj <- function(covariate_obj, claim_size, random_seed = NULL) {
 
     covariates_data <- simulate_covariates(
         covariate_obj,
