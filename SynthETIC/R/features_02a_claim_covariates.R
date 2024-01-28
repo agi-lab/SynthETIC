@@ -456,7 +456,8 @@ claim_size_adj <- function(covariate_obj, claim_size, random_seed = NULL) {
 
     covariates_data <- simulate_covariates(
         covariate_obj,
-        claim_size_list = claim_size
+        claim_size_list = claim_size,
+        random_seed = random_seed
     )
 
     claim_size_adj <- claim_size_adj.fit(covariates_data, claim_size)
