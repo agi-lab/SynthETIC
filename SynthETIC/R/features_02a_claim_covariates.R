@@ -53,12 +53,13 @@ check_covariates_class <- function(covariates) {
 
 #' Sets the claims relativity for a `covariates` object.
 #'
-#' @param covariates an object of type `covariates`. see \code{\link{covariates}}
+#' @param covariates an object of type `covariates`, see \code{\link{covariates}}
 #' @param relativity see \code{\link{relativity_template}}
 #' @param freq_sev one of `"freq"` or `"sev"` to adjust frequency or severity
 #'  relativities respectively
 #'
 #' @return Returns a `covariates` object.
+#' @seealso \code{\link{covariates}}, \code{\link{relativity_template}}
 #' @export
 set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq", "sev")) {
 
@@ -97,14 +98,13 @@ set.covariates_relativity <- function(covariates, relativity, freq_sev = c("freq
 #' and associated factors in vector form.
 #'
 #' @return Returns a dataframe object, with five columns:
-#' \itemize{
-#'      \item{} {`factor_i` Factor i}
-#'      \item{} {`factor_j` Factor j}
-#'      \item{} {`level_ik` Level within Factor i}
-#'      \item{} {`level_jl` Level within Factor j}
-#'      \item{} {`relativity` Relativity between `level_ik` and `level_jl`,}
-#'      defaults to `NA`
-#'  }
+#' \tabular{ll}{
+#' `factor_i` \tab Factor i. \cr
+#' `factor_j` \tab Factor j. \cr
+#' `level_ik` \tab Level within Factor i. \cr
+#' `level_jl` \tab Level within Factor j. \cr
+#' `relativity` \tab Relativity between `level_ik` and `level_jl`, defaults to `NA`.
+#' }
 #'
 #' @details
 #'
@@ -255,7 +255,7 @@ check_relativity <- function(factors, relativity) {
 #'
 #' Constructs a `covariates_data` object which stores the dataset of known covariate levels of each factor.
 #'
-#' @param covariates a `covariates` object
+#' @param covariates a \code{\link{covariates}} object
 #' @param data a dataset of covariate values, with columns equal to each of the covariate factors and rows related to individual claim observations.
 #' @param covariates_id optional list of list of ids, in the same format as a \code{\link{claim_size}} output. Also see \code{\link{to_SynthETIC}}. Defaults to \code{NULL}.
 #'
@@ -313,7 +313,7 @@ check_covariates_data <- function(covariates, data, covariates_id) {
 #'
 #' Calculates the relativities (`freq` or `sev`) of a set of covariate values.
 #'
-#' @param covariates_data a `covariates_data` object
+#' @param covariates_data a \code{\link{covariates_data}} object
 #' @param freq_sev one of `freq` or `sev` to calculate the frequency or severity relativity respectively.
 #' @param by_ids optional boolean to calculate reorder the result based off claim observations instead of observations in the covariates dataset. Defaults to FALSE.
 #'
@@ -385,12 +385,13 @@ covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
 #'
 #' Simulates covariates for each claim. The relative occurrence of each combination of covariates is given the frequency relativities of the covariates.
 #'
-#' @param covariates a `covariates` object
+#' @param covariates a \code{\link{covariates}} object, which stores the frequency and severity relativities for given covariate levels.
 #' @param frequency_vector a vector in the same output as \code{\link{claim_frequency}}.
 #' @param claim_size_list optional if `frequency_vector` is not inputted. A list in the same output as \code{\link{claim_size}}.
 #' @param random_seed optional seed for random number generation for
 #' reproducibility.
 #'
+#' @return Returns a \code{\link{covariates_data}} object.
 #' @export
 simulate_covariates <- function(
         covariates,
@@ -446,10 +447,14 @@ simulate_covariates <- function(
 #'
 #' Adjusts claim sizes given a set of covariates. Note that this function firstly simulates covariate levels for each claim, see \code{\link{simulate_covariates}}.
 #'
-#' @param covariate_obj a `covariates` object
+#' @param covariate_obj a \code{\link{covariates}} object
 #' @param claim_size a list in the same output as \code{\link{claim_size}}
 #' @param random_seed optional seed for random number generation for
 #' reproducibility.
+#'
+#' @return Returns a nested named list:
+#' - `covariates_data` which is a named list of covariate relativities (\code{\link{covariates}}), the simulated covariate levels (`data`) and the claim IDs.
+#' - `claim_size_adj` which is a list of adjusted claim sizes such that the \eqn{i}th component of the list gives the sizes for all claims that occurred in period \eqn{i}.
 #'
 #' @export
 claim_size_adj <- function(covariate_obj, claim_size, random_seed = NULL) {

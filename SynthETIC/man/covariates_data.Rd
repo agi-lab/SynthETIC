@@ -7,7 +7,7 @@
 covariates_data(covariates, data, covariates_id = NULL)
 }
 \arguments{
-\item{covariates}{a \code{covariates} object}
+\item{covariates}{a \code{\link{covariates}} object}
 
 \item{data}{a dataset of covariate values, with columns equal to each of the covariate factors and rows related to individual claim observations.}
 
