@@ -125,7 +125,7 @@ usethis::use_data(test_claim_dataset_cov, overwrite = TRUE)
 
 ## test_transaction_dataset_cov
 test_transaction_dataset_cov <- generate_transaction_dataset(
-    test_claims_object,
+    test_claims_object_cov,
     adjust = FALSE # to keep the original simulated payment times
 )
 usethis::use_data(test_transaction_dataset_cov, overwrite = TRUE)
