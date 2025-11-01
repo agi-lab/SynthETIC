@@ -26,7 +26,7 @@ Description: Creation of an individual claims simulator which generates various
     modelling. The distributional assumptions used to generate this data set can
     be easily modified by users to match their experiences. Reference: Avanzi B,
     Taylor G, Wang M, Wong B (2020) "SynthETIC: an individual insurance claim
-    simulator with feature control" <arXiv:2008.05693>.
+    simulator with feature control" <doi:10.48550/arXiv.2008.05693>.
 License: GPL-3
 Encoding: UTF-8
 URL: https://github.com/agi-lab/SynthETIC

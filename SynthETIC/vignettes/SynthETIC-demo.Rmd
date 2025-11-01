@@ -399,10 +399,10 @@ plot(ecdf(unlist(claim_sizes_GLM)), xlim = c(0, 2000000),
 ```
 
 ## Example 2.4: Bootstrapping from given loss data {#ex2.4}
-Suppose we have an existing dataset of claim costs at hand that we wish to simulate from, e.g. `ausautoBI8999` (an automobile bodily injury claim dataset in Australia) from [`CASDatasets`](http://cas.uqam.ca). We can take a bootstrap resample of the dataset and then convert to `SynthETIC` format with ease:
+Suppose we have an existing dataset of claim costs at hand that we wish to simulate from, e.g. `ausautoBI8999` (an automobile bodily injury claim dataset in Australia) from [`CASDatasets`](https://cas.uqam.ca). We can take a bootstrap resample of the dataset and then convert to `SynthETIC` format with ease:
 
 ```{r eval=FALSE}
-# install.packages("CASdatasets", repos = "http://cas.uqam.ca/pub/", type = "source")
+# install.packages("CASdatasets", repos = "https://cas.uqam.ca/pub/", type = "source")
 library(CASdatasets)
 data("ausautoBI8999")
 boot <- sample(ausautoBI8999$AggClaim, size = sum(n_vector), replace = TRUE)
