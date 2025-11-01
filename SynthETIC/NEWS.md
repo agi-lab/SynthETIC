@@ -1,5 +1,11 @@
 # SynthETIC
 
+# SynthETIC 1.1.1
+
+## Minor improvements and fixes 
+
+* Includes a random seed option to for claims covariate simulation.
+
 # SynthETIC 1.1.0
 
 ## Inclusion of `claim_covariates` sub-module

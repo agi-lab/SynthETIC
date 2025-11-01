@@ -1,6 +1,6 @@
 Package: SynthETIC
 Title: Synthetic Experience Tracking Insurance Claims
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
     person("Benjamin", "Avanzi", role = "aut", email = "b.avanzi@unimelb.edu.au"),
     person("William", "Ho", role = "aut", email = "ho.w@unimelb.edu.au"),
@@ -33,7 +33,7 @@ URL: https://github.com/agi-lab/SynthETIC
 BugReports: https://github.com/agi-lab/SynthETIC/issues
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Suggests: 
     knitr,
     rmarkdown,

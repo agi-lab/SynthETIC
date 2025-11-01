@@ -5,7 +5,7 @@
 \alias{test_transaction_dataset_cov}
 \title{Transactions Dataset}
 \format{
-An object of class \code{data.frame} with 18983 rows and 12 columns.
+An object of class \code{data.frame} with 17382 rows and 12 columns.
 }
 \usage{
 test_transaction_dataset_cov

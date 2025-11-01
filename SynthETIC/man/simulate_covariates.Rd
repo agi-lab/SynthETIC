@@ -7,7 +7,8 @@
 simulate_covariates(
   covariates,
   frequency_vector = 1,
-  claim_size_list = list(1)
+  claim_size_list = list(1),
+  random_seed = NULL
 )
 }
 \arguments{
@@ -16,6 +17,9 @@ simulate_covariates(
 \item{frequency_vector}{a vector in the same output as \code{\link{claim_frequency}}.}
 
 \item{claim_size_list}{optional if \code{frequency_vector} is not inputted. A list in the same output as \code{\link{claim_size}}.}
+
+\item{random_seed}{optional seed for random number generation for
+reproducibility.}
 }
 \value{
 Returns a \code{\link{covariates_data}} object.

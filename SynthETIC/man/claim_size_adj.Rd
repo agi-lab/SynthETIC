@@ -4,12 +4,15 @@
 \alias{claim_size_adj}
 \title{Covariates Claim Size Adjustment}
 \usage{
-claim_size_adj(covariate_obj, claim_size)
+claim_size_adj(covariate_obj, claim_size, random_seed = NULL)
 }
 \arguments{
 \item{covariate_obj}{a \code{\link{covariates}} object}
 
 \item{claim_size}{a list in the same output as \code{\link{claim_size}}}
+
+\item{random_seed}{optional seed for random number generation for
+reproducibility.}
 }
 \value{
 Returns a nested named list:
