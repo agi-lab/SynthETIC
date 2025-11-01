@@ -388,10 +388,18 @@ covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
 #' @param covariates a \code{\link{covariates}} object, which stores the frequency and severity relativities for given covariate levels.
 #' @param frequency_vector a vector in the same output as \code{\link{claim_frequency}}.
 #' @param claim_size_list optional if `frequency_vector` is not inputted. A list in the same output as \code{\link{claim_size}}.
+#' @param random_seed optional seed for random number generation for
+#' reproducibility.
 #'
 #' @return Returns a \code{\link{covariates_data}} object.
 #' @export
-simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_list = list(1)) {
+simulate_covariates <- function(
+        covariates,
+        frequency_vector = 1,
+        claim_size_list = list(1),
+        random_seed = NULL
+) {
+    set.seed(random_seed)
 
     if (!missing(frequency_vector) & !missing(claim_size_list)) {
         stop("specify 'frequency_vector' or 'claim_size_list' but not both")
@@ -441,17 +449,20 @@ simulate_covariates <- function(covariates, frequency_vector = 1, claim_size_lis
 #'
 #' @param covariate_obj a \code{\link{covariates}} object
 #' @param claim_size a list in the same output as \code{\link{claim_size}}
+#' @param random_seed optional seed for random number generation for
+#' reproducibility.
 #'
 #' @return Returns a nested named list:
 #' - `covariates_data` which is a named list of covariate relativities (\code{\link{covariates}}), the simulated covariate levels (`data`) and the claim IDs.
 #' - `claim_size_adj` which is a list of adjusted claim sizes such that the \eqn{i}th component of the list gives the sizes for all claims that occurred in period \eqn{i}.
 #'
 #' @export
-claim_size_adj <- function(covariate_obj, claim_size) {
+claim_size_adj <- function(covariate_obj, claim_size, random_seed = NULL) {
 
     covariates_data <- simulate_covariates(
         covariate_obj,
-        claim_size_list = claim_size
+        claim_size_list = claim_size,
+        random_seed = random_seed
     )
 
     claim_size_adj <- claim_size_adj.fit(covariates_data, claim_size)
