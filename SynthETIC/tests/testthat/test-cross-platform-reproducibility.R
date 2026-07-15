@@ -1,41 +1,109 @@
 # Cross-platform reproducibility regression test
 # ----------------------------------------------------------------------------
-# Reproduces the OS-dependence bug documented in
-# `CROSS_PLATFORM_REPRODUCIBILITY.md`: with a fixed RNG seed, the default
-# SynthETIC pipeline (freq -> occurrence -> claim_size -> covariates -> payment
-# counts -> payment sizes) yields byte-identical output on a given OS but
-# diverges across OSes because two samplers consume a variable number of
-# uniforms:
+# Reproduces the OS-dependence bug documented in `CROSS_PLATFORM_REPRODUCIBILITY.md`:
+# with a fixed RNG seed, the default SynthETIC pipeline (freq -> occurrence ->
+# claim_size -> covariates -> payment counts -> payment sizes) yields identical
+# output on a given OS but diverges across OSes. The cause is samplers that
+# consume a *variable* number of uniforms per deviate:
 #
-#   * `claim_size()` default power-normal uses a `while (any(s < 30))` rejection
-#     loop. A 1-ULP libm difference in the accept/reject comparison can flip a
-#     single accept/reject decision, consuming one extra uniform on one OS but
-#     not another. Every subsequent draw on the shared RNG stream then desyncs.
-#   * `claim_payment_size()` default uses `stats::rbeta`, a rejection-based
-#     gamma+rejection sampler. Same uniform-count-desync mechanism.
+#   * `claim_size()` default power-normal: previously a `while (any(s < 30))`
+#     rejection loop. A 1-ULP libm difference in the accept/reject comparison
+#     consumes one extra uniform on one OS but not another, desyncing every
+#     downstream module. FIXED (Layer A): pure inverse-transform now consumes
+#     exactly `total_claim` uniforms.
+#   * `simulate_covariates()` default categorical: previously `rmultinom(n, 1, p)`,
+#     which internally walks each trial with successive rbinom draws and stops
+#     early once the size is zero -- a per-trial variable uniform count. FIXED
+#     (Layer A2): pure inversion via findInterval, exactly n uniforms.
+#   * `claim_payment_size()` default payment proportions: still uses
+#     `stats::rbeta`, a rejection sampler (variable uniform count). Not yet
+#     fixed (planned Layer B); this test will surface it once the upstream
+#     modules stop desyncing the stream.
 #
-# This test compares the live pipeline output against a canonical snapshot
-# (`cross_platform_snapshot.rds`) generated on the canonical platform (macOS).
-# Pre-fix: the macOS runner reproduces the snapshot (green); ubuntu/windows
-# runners diverge (red) -- reproducing the documented bug visible on CI.
-# Post-fix (layer A + B replacing the variable-uniform-count samplers with
-# pure inversion): all three runners reproduce the macOS snapshot to within
-# machine-epsilon tolerance (green).
+# This test compares live output against a canonical macOS snapshot
+# (`cross_platform_snapshot.rds`). On each OS the test reports a single
+# one-line summary of where the pipeline first diverges from the snapshot, so
+# CI log noise stays minimal.
 #
-# When the *intended* numeric output of the simulator changes (e.g. when the
-# fix is applied), regenerate the snapshot by running
+# When the *intended* numeric output of the simulator changes (e.g. after
+# applying a fix), regenerate the snapshot by running
 # `data-raw/gen_cross_platform_snapshot.R` on the canonical platform and
 # committing the updated `cross_platform_snapshot.rds`. Do NOT regenerate it
-# just to silence a Windows/Linux test failure unless that failure is the
-# expected consequence of an intentional change.
+# merely to silence a platform failure unless that failure is the expected
+# consequence of an intentional change.
 
 SNAPSHOT_PATH <- test_path("cross_platform_snapshot.rds")
-
 snapshot <- readRDS(SNAPSHOT_PATH)
 
+# ---------------------------------------------------------------------------
+# Concise comparison helpers. testthat's default expect_identical/expect_equal
+# print every differing row/value, which produces megabytes of uninformative
+# output when the cross-platform bug fires (thousands of categorical rows or
+# numeric deviates differ only because one upstream draw flipped). These
+# helpers reduce each assertion to at most one line of diagnostic text.
+# ---------------------------------------------------------------------------
+
+# Compare two numeric (atomic or list-of-atomics) objects by flattening,
+# computing the count of contrasting elements, the first divergent index,
+# the values at that index, and the maximum relative difference. Returns a
+# one-line failure message describing the divergence, or NULL if identical
+# within `tolerance`.
+diff_numeric <- function(label, actual, expected,
+                        tolerance = sqrt(.Machine$double.eps)) {
+  a <- unlist(actual, use.names = FALSE)
+  e <- unlist(expected, use.names = FALSE)
+  if (length(a) != length(e)) {
+    return(sprintf(
+      "%s: length mismatch (actual=%d, expected=%d)",
+      label, length(a), length(e)
+    ))
+  }
+  na_mismatch <- (is.na(a) != is.na(e))
+  rdiff <- abs(a - e) / pmax(abs(e), .Machine$double.xmin)
+  bad <- which(na_mismatch | rdiff > tolerance)
+  if (length(bad) == 0L) return(NULL)
+  i <- bad[1L]
+  sprintf(
+    "%s: %d of %d deviate; first at idx %d (actual=%s, snap=%s, max_reldiff=%g)",
+    label, length(bad), length(a), i,
+    format(a[i], digits = 8), format(e[i], digits = 8),
+    max(rdiff[bad])
+  )
+}
+
+# Compare two data.frames (categorical covariates) and report the first row
+# whose columns differ and how many rows total differ. Returns a one-line
+# message or NULL if identical.
+diff_categorical <- function(label, actual, expected) {
+  if (!identical(dim(actual), dim(expected))) {
+    return(sprintf(
+      "%s: dim mismatch (actual=%s, expected=%s)",
+      label, paste(dim(actual), collapse = "x"),
+      paste(dim(expected), collapse = "x")
+    ))
+  }
+  diff_rows <- which(rowSums(as.matrix(actual != expected)) > 0L)
+  if (length(diff_rows) == 0L) return(NULL)
+  i <- diff_rows[1L]
+  sprintf(
+    "%s: %d of %d rows differ; first at row %d (actual=[%s], snap=[%s])",
+    label, length(diff_rows), nrow(actual), i,
+    paste(actual[i, ], collapse = "/"),
+    paste(expected[i, ], collapse = "/")
+  )
+}
+
+# Wrapper: run `check` (returns NULL or one-line message), and assert with
+# expect_true so testthat does not echo the entire data diff.
+expect_no_diff <- function(msg) {
+  expect_true(is.null(msg), info = msg %||% "")
+}
+
+# ---------------------------------------------------------------------------
 # Guard against future changes to R's default RNG knobs -- if R ever changes
 # the defaults, a cross-platform comparison against this snapshot would no
 # longer be a like-for-like check, so skip rather than silently misreport.
+# ---------------------------------------------------------------------------
 test_that("snapshot RNG configuration matches the active RNG configuration", {
   rng_now <- RNGkind()
   snap_rng <- snapshot$rng_kind
@@ -50,13 +118,13 @@ test_that("snapshot RNG configuration matches the active RNG configuration", {
   expect_identical(rng_now, snap_rng)
 })
 
-# Single-test helper that recomputes the pipeline from a single seed. We define
-# it here (rather than in a helper) so any future change to the call sequence is
-# mirrored in exactly one place alongside the snapshot it validates.
+# Recomputes the pipeline from a single seed. Defined here (instead of in a
+# helper file) so any future change to the call sequence stays in exactly one
+# place alongside the snapshot it validates.
 run_pipeline <- function() {
   # Order matters: R's RNGkind() silently resets .Random.seed when the active
-  # kind actually changes. Match the order used by gen_cross_platform_snapshot.R
-  # (RNGkind first, then set.seed) so the two run the same stream.
+  # kind actually changes. Match the order used by the snapshot generator
+  # (RNGkind first, then set.seed) so the two runs share the same stream.
   RNGkind("Mersenne-Twister", "Inversion", "Rejection")
   set.seed(snapshot$seed)
 
@@ -69,9 +137,7 @@ run_pipeline <- function() {
   claim_sizes <- claim_size(freq)
   adj <- claim_size_adj(test_covariates_obj, claim_sizes)
   no_payments <- claim_payment_no(freq, adj$claim_size_adj)
-  payment_sizes <- claim_payment_size(
-    freq, adj$claim_size_adj, no_payments
-  )
+  payment_sizes <- claim_payment_size(freq, adj$claim_size_adj, no_payments)
 
   list(
     freq = freq,
@@ -84,61 +150,70 @@ run_pipeline <- function() {
   )
 }
 
-# M1 -- frequency + occurrence time. Inversion + rpois; expected to match the
-# snapshot bit-for-bit on *every* OS today (already OS-stable per the
-# reproducibility investigation), so a failure here signals RNG/stream setup
-# drift rather than the libm bug under test.
+# M1 -- frequency + occurrence time. Inversion + rpois; OS-stable already per
+# the reproducibility investigation. Sanity control: a failure here signals
+# RNG/stream setup drift, not the libm bug under test.
 test_that("M1 frequency and occurrence times are OS-stable (control)", {
   out <- run_pipeline()
-  expect_identical(out$freq, snapshot$freq)
-  expect_identical(out$occurrence_times, snapshot$occurrence_times)
+  expect_no_diff(diff_numeric("M1 freq", out$freq, snapshot$freq))
+  expect_no_diff(diff_numeric(
+    "M1 occurrence_times", out$occurrence_times, snapshot$occurrence_times
+  ))
 })
 
-# M2 -- claim size. First OS-divergence point. Pre-fix: red on ubuntu/windows
-# (desync of the rejection loop); red on ubuntu/windows here while macOS stays
-# green. Post-fix (layer A): green on all OSes within machine-epsilon tolerance.
+# M2 -- claim size. First OS-divergence point prior to Layer A; now uses pure
+# inverse transform (exactly one uniform per claim) and should match the
+# snapshot within machine-epsilon on all OSes.
 test_that("M2 claim sizes are cross-platform reproducible", {
   out <- run_pipeline()
-  # Use expect_equal (relative tolerance sqrt(.Machine$double.eps)) rather than
-  # expect_identical: layer A fixes the *stream desync*, but per-claim draws go
-  # through libm `qnorm` which can differ at ~1 ULP across platforms.
-  expect_equal(out$claim_sizes, snapshot$claim_sizes,
-               info = "claim_sizes diverged across OSes (claim_size rejection loop)")
+  expect_no_diff(diff_numeric(
+    "M2 claim_sizes", out$claim_sizes, snapshot$claim_sizes
+  ))
 })
 
-# M2a -- covariate simulation via rmultinom. Categorical assignments are
-# downstream of M2 on the shared RNG stream: a single shifted uniform in M2
-# reshuffles every categorical draw here. expect_identical because the columns
-# are strings/factors -- once the stream is stable, the assignment should be
-# bit-identical across OSes (no libm in the categorical path).
+# M2a -- covariate simulation. Previously used rmultinom (per-trial variable
+# uniform count via early-stopping rbinom); now uses pure inversion
+# (findInterval over cumsum(p), exactly n uniforms). The categorical
+# assignments should be identical once the upstream RNG stream is stable.
 test_that("M2a covariate assignments are cross-platform reproducible", {
   out <- run_pipeline()
-  expect_identical(out$covariates_data, snapshot$covariates_data,
-                   info = "covariates reshuffled by an upstream RNG stream shift")
+  expect_no_diff(diff_categorical(
+    "M2a covariates", out$covariates_data$data, snapshot$covariates_data$data
+  ))
 })
 
-# M2a (continued) -- adjusted claim sizes. Same stream-sensitivity rationale
-# as M2; numerically they are multiplied by relativities as a final step.
+test_that("M2a covariate claim ids match the frequency vector", {
+  out <- run_pipeline()
+  expect_no_diff(diff_numeric(
+    "M2a covariates ids", out$covariates_data$ids, snapshot$covariates_data$ids
+  ))
+})
+
+# M2a (continued) -- adjusted claim sizes (after multiplying by severity
+# relativities and renormalising). Same stream-sensitivity rationale as M2.
 test_that("M2a adjusted claim sizes are cross-platform reproducible", {
   out <- run_pipeline()
-  expect_equal(out$claim_sizes_adj, snapshot$claim_sizes_adj,
-               info = "claim_sizes_adj diverged across OSes")
+  expect_no_diff(diff_numeric(
+    "M2a claim_sizes_adj", out$claim_sizes_adj, snapshot$claim_sizes_adj
+  ))
 })
 
 # M5 -- number of partial payments per claim. Integer-valued, downstream of
-# M2a on the stream. expect_identical because integers should match exactly
-# once the stream is stable.
+# M2a on the stream; expected to match exactly once M2/M2a stop desyncing.
 test_that("M5 payment counts are cross-platform reproducible", {
   out <- run_pipeline()
-  expect_identical(out$no_payments, snapshot$no_payments,
-                   info = "no_payments diverged across OSes")
+  expect_no_diff(diff_numeric(
+    "M5 no_payments", out$no_payments, snapshot$no_payments
+  ))
 })
 
-# M6 -- payment sizes. Second OS-divergence point (rbeta rejection sampler).
-# Pre-fix: red on ubuntu/windows; macOS green. Post-fix (layer B): green on all
-# OSes within machine-epsilon.
+# M6 -- payment sizes. Second OS-divergence point: stats::rbeta is a rejection
+# sampler (variable uniform count). Not yet fixed; this test will stay red on
+# Ubuntu/Windows (and may now surface as the first divergence point) until
+# Layer B replaces rbeta with qbeta(runif(...)).
 test_that("M6 payment sizes are cross-platform reproducible", {
   out <- run_pipeline()
-  expect_equal(out$payment_sizes, snapshot$payment_sizes,
-               info = "payment_sizes diverged across OSes (rbeta rejection sampler)")
+  expect_no_diff(diff_numeric(
+    "M6 payment_sizes", out$payment_sizes, snapshot$payment_sizes
+  ))
 })

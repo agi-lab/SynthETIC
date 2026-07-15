@@ -428,12 +428,26 @@ simulate_covariates <- function(
     )
     all_relativities <- covariates_relativity(temp_covariates_data, freq_sev = "freq")
 
-    covariates_sim <- stats::rmultinom(n, 1, all_relativities)
-    covariates_id <- base::apply(
-        covariates_sim,
-        MARGIN = 2,
-        FUN = function(x) match(1, x)
-    )
+    # Pure-inversion categorical sampler: one uniform per claim (fixed RNG
+    # consumption). rmultinom(n, 1, prob) internally walks each trial along the
+    # K-1 categories with successive rbinom draws and stops early once the
+    # remaining size hits zero, so the number of uniforms consumed varies
+    # trial-by-trial and is sensitive to 1-ULP differences (e.g. from FMA
+    # contractions in the relativity arithmetic): a single flipped assignment
+    # then desyncs the entire downstream RNG stream. findInterval(u, cumsum(prob))
+    # redraws the same categorical distribution while consuming exactly n
+    # uniforms, so any cross-OS 1-ULP differences can no longer amplify into a
+    # stream desync.
+    prob <- all_relativities / sum(all_relativities)
+    cum_prob <- cumsum(prob)
+    u <- stats::runif(n)
+    covariates_id <- as.integer(findInterval(u, cum_prob) + 1L)
+    # Guard the lower tail: runif can (very rarely) return values at or just
+    # below the final cumulative threshold due to rounding; ensure ids stay in
+    # [1, K].
+    K <- length(prob)
+    covariates_id[covariates_id < 1L] <- 1L
+    covariates_id[covariates_id > K] <- K
 
     covariates_x <- all_combinations[covariates_id, ]
     rownames(covariates_x) <- NULL
