@@ -1,0 +1,64 @@
+# Cross-platform reproducibility regression detection
+# ----------------------------------------------------------------------------
+# Verifies the OS-dependence bug documented in `CROSS_PLATFORM_REPRODUCIBILITY.md`
+# at the SynthETIC layer (M1 frequency, M2 claim size, M2a covariate simulation,
+# M5 payment counts, M6 payment sizes) by running the testthat test in
+# `SynthETIC/tests/testthat/test-cross-platform-reproducibility.R` against a
+# committed canonical macOS snapshot.
+#
+# Pre-fix expectation (before any sampler changes):
+#   * macOS runner -> match -> green (snapshot reproduces itself)
+#   * ubuntu runner -> diverge (libm vs macOS) -> red
+#   * windows runner -> diverge (UCRT) -> red
+# The contrast between macOS-green and ubuntu/windows-red is exactly the bug
+# report in the markdown investigation.
+#
+# Post-fix expectation (after replacing the variable-uniform-count samplers
+# `claim_size()` rejection loop and `claim_payment_size()` rbeta calls with pure
+# inversion samplers): all three runners -> green.
+#
+# The workflow runs:
+#   - on every push to any branch
+#   - on every pull request
+#   - on manual `workflow_dispatch`
+
+name: Cross-platform reproducibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cross-platform-tests:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} (R ${{ matrix.r }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        r: [release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: SynthETIC
+          needs: check
+          extra-packages: |
+            any::rcmdcheck
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: SynthETIC
+          args: 'c("--no-manual")'
+          error-on: '"error"'
+          check-dir: '"check"'
