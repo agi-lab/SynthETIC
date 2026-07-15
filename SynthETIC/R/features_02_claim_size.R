@@ -90,13 +90,16 @@ claim_size <- function(frequency_vector, simfun, type = c("r", "p"), ...) {
       }
     }
   } else {
-    # if no distribution function is provided, use default power normal
-    s <- (stats::rnorm(total_claim, mean = 9.5, sd = 3))^5
-    while (any(s < 30)) {
-      for (j in which(s < 30)) {
-        s[j] <- (stats::rnorm(1, mean = 9.5, sd = 3))^5
-      }
-    }
+    # if no distribution function is provided, use default power normal:
+    # S^0.2 ~ Normal(9.5, sd = 3), left-truncated at S = 30. Sample by inverse
+    # transform so each claim consumes exactly one uniform -- a rejection loop
+    # would consume an OS-dependent number of uniforms (1-ULP libm differences
+    # in the s < 30 comparison) and desync every downstream module.
+    trunc_z <- 30^(1 / 5)
+    trunc_prob <- stats::pnorm(trunc_z, mean = 9.5, sd = 3)
+    u <- stats::runif(total_claim)
+    z <- stats::qnorm(trunc_prob + u * (1 - trunc_prob), mean = 9.5, sd = 3)
+    s <- z^5
     # re-scale the claim sizes according to ref_claim value provided
     s <- .pkgenv$ref_claim / 200000 * s
     claim_sizes <- to_SynthETIC(s, frequency_vector)
