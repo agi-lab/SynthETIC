@@ -11,8 +11,11 @@ claim_size_adj(covariate_obj, claim_size, random_seed = NULL)
 
 \item{claim_size}{a list in the same output as \code{\link{claim_size}}}
 
-\item{random_seed}{optional seed for random number generation for
-reproducibility.}
+\item{random_seed}{optional seed for random number generation, for
+reproducibility; passed to \code{\link{simulate_covariates}}. If supplied,
+the covariate simulation is seeded locally and the caller's random number
+stream is restored on exit. If \code{NULL} (the default) the stream is left
+untouched, so a seed set by the caller carries through.}
 }
 \value{
 Returns a nested named list:

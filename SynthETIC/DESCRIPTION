@@ -1,13 +1,14 @@
 Package: SynthETIC
 Title: Synthetic Experience Tracking Insurance Claims
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(
     person("Benjamin", "Avanzi", role = "aut", email = "b.avanzi@unimelb.edu.au"),
     person("William", "Ho", role = "aut", email = "ho.w@unimelb.edu.au"),
     person("Greg", "Taylor", role = "aut", email = "greg_taylor60@hotmail.com"),
     person("Melantha", "Wang", role = c("aut", "cre"), email = "wang.melantha@gmail.com"),
-    person("Bernard", "Wong", role = "aut", email = "bernard.wong@unsw.edu.au"))
-Author: Benjamin Avanzi [aut], William Ho [aut], Greg Taylor [aut], Melantha Wang [aut, cre], Bernard Wong [aut]
+    person("Bernard", "Wong", role = "aut", email = "bernard.wong@unsw.edu.au"),
+    person("Patrick", "Laub", role = "ctb", email = "patrick.laub@gmail.com"))
+Author: Benjamin Avanzi [aut], William Ho [aut], Greg Taylor [aut], Melantha Wang [aut, cre], Bernard Wong [aut], Patrick Laub [ctb]
 Maintainer: Melantha Wang <wang.melantha@gmail.com>
 Imports:
     stats,
@@ -38,7 +39,9 @@ Suggests:
     knitr,
     rmarkdown,
     RColorBrewer,
-    actuar
+    actuar,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
+Config/testthat/edition: 3
