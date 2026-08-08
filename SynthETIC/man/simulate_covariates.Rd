@@ -18,8 +18,12 @@ simulate_covariates(
 
 \item{claim_size_list}{optional if \code{frequency_vector} is not inputted. A list in the same output as \code{\link{claim_size}}.}
 
-\item{random_seed}{optional seed for random number generation for
-reproducibility.}
+\item{random_seed}{optional seed for random number generation, for
+reproducibility. If supplied, the covariate simulation is seeded locally and
+the caller's random number stream is restored on exit, so the draws made here
+neither depend on nor disturb the surrounding simulation. If \code{NULL} (the
+default) the stream is left untouched, and a seed set by the caller via
+\code{\link[base]{set.seed}} carries through to the covariate draws.}
 }
 \value{
 Returns a \code{\link{covariates_data}} object.

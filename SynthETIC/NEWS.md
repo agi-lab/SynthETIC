@@ -1,5 +1,34 @@
 # SynthETIC
 
+# SynthETIC 1.1.2
+
+## Bug fixes
+
+* `simulate_covariates()` no longer calls `set.seed()` unconditionally. With the
+default `random_seed = NULL` this previously resolved to `set.seed(NULL)`, which
+reseeds R's random number generator from system entropy: the covariate levels,
+and every draw made after them, ignored any seed set by the user and were not
+reproducible. The caller's random number stream is now left untouched in this
+case, so a seed set via `set.seed()` carries through the whole simulation as
+expected. Thanks to Patrick Laub (@Pat-Laub, #5).
+
+* When `random_seed` **is** supplied to `simulate_covariates()` or
+`claim_size_adj()`, the caller's random number stream is now saved and restored
+around the local seeding, instead of being left rewound to that seed. The
+simulated covariate levels and adjusted claim sizes for a given `random_seed`
+are unchanged; only the state of the stream afterwards differs, so subsequent
+modules (notification, closure, payments) will now draw from the caller's own
+stream rather than from one determined by `random_seed`.
+
+## Note on the bundled datasets
+
+The bundled datasets (`test_covariates_dataset`, `test_claims_object_cov`,
+`test_claim_dataset_cov` and `test_transaction_dataset_cov`) are **unchanged** in
+this release. They were generated before this fix and are therefore not
+reproducible from `data-raw/test_data_covariates.R`; they have been left as-is so
+that existing analyses built on them continue to work. They will be regenerated
+in a future major release.
+
 # SynthETIC 1.1.1
 
 ## Minor improvements and fixes 

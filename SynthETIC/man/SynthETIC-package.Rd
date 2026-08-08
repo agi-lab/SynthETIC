@@ -27,5 +27,10 @@ Authors:
   \item Bernard Wong \email{bernard.wong@unsw.edu.au}
 }
 
+Other contributors:
+\itemize{
+  \item Patrick Laub \email{patrick.laub@gmail.com} [contributor]
+}
+
 }
 \keyword{internal}

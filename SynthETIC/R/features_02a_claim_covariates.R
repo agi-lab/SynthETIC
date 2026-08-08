@@ -388,8 +388,12 @@ covariates_relativity <- function(covariates_data, freq_sev = c("freq", "sev"),
 #' @param covariates a \code{\link{covariates}} object, which stores the frequency and severity relativities for given covariate levels.
 #' @param frequency_vector a vector in the same output as \code{\link{claim_frequency}}.
 #' @param claim_size_list optional if `frequency_vector` is not inputted. A list in the same output as \code{\link{claim_size}}.
-#' @param random_seed optional seed for random number generation for
-#' reproducibility.
+#' @param random_seed optional seed for random number generation, for
+#' reproducibility. If supplied, the covariate simulation is seeded locally and
+#' the caller's random number stream is restored on exit, so the draws made here
+#' neither depend on nor disturb the surrounding simulation. If `NULL` (the
+#' default) the stream is left untouched, and a seed set by the caller via
+#' \code{\link[base]{set.seed}} carries through to the covariate draws.
 #'
 #' @return Returns a \code{\link{covariates_data}} object.
 #' @export
@@ -399,12 +403,24 @@ simulate_covariates <- function(
         claim_size_list = list(1),
         random_seed = NULL
 ) {
+    # Isolate the covariate draws behind `random_seed` without disturbing the
+    # caller's random number stream: save `.Random.seed`, seed locally, and
+    # restore on exit. When `random_seed` is NULL the stream is left untouched,
+    # so a seed set by the caller flows through as expected.
     if (!is.null(random_seed)) {
         if (exists(".Random.seed", .GlobalEnv, inherits = FALSE)) {
             old_seed <- .GlobalEnv$.Random.seed
-            on.exit(.GlobalEnv$.Random.seed <- old_seed)
+            on.exit(
+                assign(".Random.seed", old_seed, envir = .GlobalEnv),
+                add = TRUE, after = FALSE
+            )
         } else {
-            on.exit(rm(".Random.seed", envir = .GlobalEnv))
+            # No stream had been initialised on entry; do not leave behind the
+            # one created by set.seed() below.
+            on.exit(
+                rm(list = ".Random.seed", envir = .GlobalEnv),
+                add = TRUE, after = FALSE
+            )
         }
         set.seed(random_seed)
     }
@@ -457,8 +473,11 @@ simulate_covariates <- function(
 #'
 #' @param covariate_obj a \code{\link{covariates}} object
 #' @param claim_size a list in the same output as \code{\link{claim_size}}
-#' @param random_seed optional seed for random number generation for
-#' reproducibility.
+#' @param random_seed optional seed for random number generation, for
+#' reproducibility; passed to \code{\link{simulate_covariates}}. If supplied,
+#' the covariate simulation is seeded locally and the caller's random number
+#' stream is restored on exit. If `NULL` (the default) the stream is left
+#' untouched, so a seed set by the caller carries through.
 #'
 #' @return Returns a nested named list:
 #' - `covariates_data` which is a named list of covariate relativities (\code{\link{covariates}}), the simulated covariate levels (`data`) and the claim IDs.

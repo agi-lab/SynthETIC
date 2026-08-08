@@ -3,6 +3,24 @@
 ## applying claim size adjustments to covariates
 ## see the vignette for detailed comments on this code
 
+## IMPORTANT (as of v1.1.2)
+## ------------------------------------------------------------------------
+## The datasets currently shipped in data/ -- test_covariates_dataset,
+## test_claims_object_cov, test_claim_dataset_cov and
+## test_transaction_dataset_cov -- were generated before the RNG fix in v1.1.2
+## and CANNOT be reproduced by re-running this script.
+##
+## Prior to that fix, claim_size_adj() below called set.seed(NULL) internally,
+## which reseeds from system entropy. The set.seed() on the next line was
+## therefore only in effect up to that call; everything downstream of it came
+## from an entropy-seeded stream.
+##
+## Re-running this script now WILL produce different data from what is shipped.
+## That is expected. The shipped datasets have deliberately been left untouched
+## so that existing user analyses remain valid; regenerate them only as a
+## conscious, documented change (see NEWS.md).
+## ------------------------------------------------------------------------
+
 ## generated with default assumptions
 set.seed(20200131)
 
