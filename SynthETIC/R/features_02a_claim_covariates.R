@@ -399,7 +399,15 @@ simulate_covariates <- function(
         claim_size_list = list(1),
         random_seed = NULL
 ) {
-    set.seed(random_seed)
+    if (!is.null(random_seed)) {
+        if (exists(".Random.seed", .GlobalEnv, inherits = FALSE)) {
+            old_seed <- .GlobalEnv$.Random.seed
+            on.exit(.GlobalEnv$.Random.seed <- old_seed)
+        } else {
+            on.exit(rm(".Random.seed", envir = .GlobalEnv))
+        }
+        set.seed(random_seed)
+    }
 
     if (!missing(frequency_vector) & !missing(claim_size_list)) {
         stop("specify 'frequency_vector' or 'claim_size_list' but not both")
