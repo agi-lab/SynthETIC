@@ -5,11 +5,14 @@
 # cross-platform divergence reported in PR #6 is a real RNG-stream desync or
 # ULP-scale floating point noise.
 #
-# Manual trigger only: this must not run on pushes to other branches.
+# Triggers only on pushes to this throwaway branch, and on manual dispatch.
+# It can never fire on master or on a pull request.
 
 name: RNG cross-platform probe
 
 on:
+  push:
+    branches: [rng-cross-platform-probe]
   workflow_dispatch:
 
 jobs:
