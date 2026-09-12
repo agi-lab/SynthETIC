@@ -1,9 +1,15 @@
 # THROWAWAY DIAGNOSTIC WORKFLOW -- delete with this branch.
 #
-# Runs tools/rng-probe/probe.R on Linux, macOS and Windows against the current
-# state of master, then diffs the three results to establish whether the
-# cross-platform divergence reported in PR #6 is a real RNG-stream desync or
-# ULP-scale floating point noise.
+# Establishes whether the cross-platform divergence reported in PR #6 is a real
+# RNG-stream desync or ULP-scale floating point noise, against the current
+# state of master.
+#
+#   probe / compare                   one seed, full detail, every stage plus
+#                                     micro-probes on R's own RNG functions
+#   probe-multiseed / compare-multi   500 seeds, compact fingerprints. A desync
+#                                     needs a rejection comparison to land
+#                                     within a ULP of its boundary, so it is a
+#                                     rare event and one seed proves little.
 #
 # Triggers only on pushes to this throwaway branch, and on manual dispatch.
 # It can never fire on master or on a pull request.
@@ -14,6 +20,13 @@ on:
   push:
     branches: [rng-cross-platform-probe]
   workflow_dispatch:
+    inputs:
+      seeds:
+        description: Number of seeds for the multi-seed probe
+        default: "500"
+
+env:
+  RNG_PROBE_SEEDS: ${{ github.event.inputs.seeds || '500' }}
 
 jobs:
   probe:
@@ -23,29 +36,23 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v5
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: release
           use-public-rspm: true
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: SynthETIC
           dependencies: '"hard"'
-
       - name: Install SynthETIC from source
         shell: bash
         run: R CMD INSTALL SynthETIC
-
       - name: Run probe
         shell: Rscript {0}
         run: source("tools/rng-probe/probe.R", echo = FALSE)
-
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: probe-${{ matrix.os }}
           path: probe-*.rds
@@ -55,16 +62,64 @@ jobs:
     needs: probe
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v5
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: release
-
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: probes
-
       - name: Compare platforms
         shell: Rscript {0}
         run: source("tools/rng-probe/compare.R", echo = FALSE)
+
+  probe-multiseed:
+    runs-on: ${{ matrix.os }}
+    name: multiseed (${{ matrix.os }})
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: SynthETIC
+          dependencies: '"hard"'
+          extra-packages: any::digest
+      - name: Install SynthETIC from source
+        shell: bash
+        run: R CMD INSTALL SynthETIC
+      - name: Run multi-seed probe
+        shell: Rscript {0}
+        run: source("tools/rng-probe/probe-multiseed.R", echo = FALSE)
+      - uses: actions/upload-artifact@v5
+        with:
+          name: multiseed-${{ matrix.os }}
+          path: multiseed-*.rds
+          if-no-files-found: error
+
+  compare-multiseed:
+    needs: probe-multiseed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: SynthETIC
+          dependencies: '"hard"'
+          extra-packages: any::digest
+      - uses: actions/download-artifact@v5
+        with:
+          path: probes
+      - name: Compare platforms (multi-seed)
+        shell: Rscript {0}
+        run: source("tools/rng-probe/compare-multiseed.R", echo = FALSE)
