@@ -1,0 +1,67 @@
+# THROWAWAY DIAGNOSTIC WORKFLOW -- delete with this branch.
+#
+# Runs tools/rng-probe/probe.R on Linux, macOS and Windows against the current
+# state of master, then diffs the three results to establish whether the
+# cross-platform divergence reported in PR #6 is a real RNG-stream desync or
+# ULP-scale floating point noise.
+#
+# Manual trigger only: this must not run on pushes to other branches.
+
+name: RNG cross-platform probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ${{ matrix.os }}
+    name: probe (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: SynthETIC
+          dependencies: '"hard"'
+
+      - name: Install SynthETIC from source
+        shell: bash
+        run: R CMD INSTALL SynthETIC
+
+      - name: Run probe
+        shell: Rscript {0}
+        run: source("tools/rng-probe/probe.R", echo = FALSE)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-${{ matrix.os }}
+          path: probe-*.rds
+          if-no-files-found: error
+
+  compare:
+    needs: probe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: probes
+
+      - name: Compare platforms
+        shell: Rscript {0}
+        run: source("tools/rng-probe/compare.R", echo = FALSE)
