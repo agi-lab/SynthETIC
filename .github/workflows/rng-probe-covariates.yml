@@ -1,0 +1,72 @@
+# THROWAWAY DIAGNOSTIC WORKFLOW -- delete with this branch.
+#
+# 500-seed cross-platform probe of the covariate pipeline (claim_size_adj ->
+# simulate_covariates -> rmultinom), which the default-pipeline probe in
+# rng-probe.yml never exercised. Also fingerprints the relativity vectors,
+# which involve no RNG, to isolate platform arithmetic from the random stream.
+#
+# Triggers only on pushes to this throwaway branch that touch the covariate
+# probe. It can never fire on master or on a pull request.
+
+name: RNG cross-platform probe (covariates)
+
+on:
+  push:
+    branches: [rng-cross-platform-probe]
+    paths:
+      - tools/rng-probe/probe-covariates.R
+      - tools/rng-probe/compare-multiseed.R
+      - .github/workflows/rng-probe-covariates.yml
+  workflow_dispatch:
+
+env:
+  RNG_PROBE_SEEDS: "500"
+
+jobs:
+  probe-covariates:
+    runs-on: ${{ matrix.os }}
+    name: covariates (${{ matrix.os }})
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: SynthETIC
+          dependencies: '"hard"'
+          extra-packages: any::digest
+      - name: Install SynthETIC from source
+        shell: bash
+        run: R CMD INSTALL SynthETIC
+      - name: Run covariate probe
+        shell: Rscript {0}
+        run: source("tools/rng-probe/probe-covariates.R", echo = FALSE)
+      - uses: actions/upload-artifact@v5
+        with:
+          name: covseed-${{ matrix.os }}
+          path: covseed-*.rds
+          if-no-files-found: error
+
+  compare-covariates:
+    needs: probe-covariates
+    runs-on: ubuntu-latest
+    env:
+      RNG_PROBE_PATTERN: '^covseed-.*\.rds$'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: actions/download-artifact@v5
+        with:
+          path: probes
+      - name: Compare platforms (covariates)
+        shell: Rscript {0}
+        run: source("tools/rng-probe/compare-multiseed.R", echo = FALSE)

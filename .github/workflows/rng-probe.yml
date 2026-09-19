@@ -19,6 +19,11 @@ name: RNG cross-platform probe
 on:
   push:
     branches: [rng-cross-platform-probe]
+    # Only re-run when this probe's own scripts change, so that pushing the
+    # covariate probe does not repeat this one.
+    paths:
+      - tools/rng-probe/probe.R
+      - tools/rng-probe/probe-multiseed.R
   workflow_dispatch:
     inputs:
       seeds:

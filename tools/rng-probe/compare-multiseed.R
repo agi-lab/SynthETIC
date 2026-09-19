@@ -9,7 +9,10 @@
 ## A single DESYNC anywhere means the variable-consumption samplers can in fact
 ## diverge across platforms, and PR #6's premise holds.
 
-files <- list.files(".", pattern = "^multiseed-.*\\.rds$", recursive = TRUE,
+## RNG_PROBE_PATTERN selects which probe's output to compare: multiseed-*.rds
+## (default pipeline) or covseed-*.rds (covariate pipeline).
+pattern <- Sys.getenv("RNG_PROBE_PATTERN", "^multiseed-.*\\.rds$")
+files <- list.files(".", pattern = pattern, recursive = TRUE,
                     full.names = TRUE)
 probes <- lapply(files, readRDS)
 names(probes) <- vapply(probes, function(p) p$os, character(1))
@@ -22,6 +25,17 @@ others <- probes[setdiff(names(probes), ref_name)]
 cat("Reference platform:", ref_name, "\n")
 for (p in probes) cat(sprintf("  %-8s %s | %d seeds\n", p$os, p$r_version,
                               length(p$seeds)))
+
+## Covariate probe only: the relativity vectors are computed with no RNG, so
+## any difference here is pure platform arithmetic feeding rmultinom.
+if (!is.null(ref$relativity_fp)) {
+  cat("\n\n=== Relativities (no RNG) ===\n\n")
+  for (nm in names(others)) {
+    same <- identical(others[[nm]]$relativity_fp, ref$relativity_fp)
+    cat(sprintf("  %-8s vs %s: %s\n", nm, ref_name,
+                if (same) "identical" else "DIFFER"))
+  }
+}
 
 classify <- function(a, b) {
   ## a, b are one-row-per-key data frames already aligned by (seed, stage)
