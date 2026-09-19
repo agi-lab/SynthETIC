@@ -444,12 +444,20 @@ simulate_covariates <- function(
     )
     all_relativities <- covariates_relativity(temp_covariates_data, freq_sev = "freq")
 
-    covariates_sim <- stats::rmultinom(n, 1, all_relativities)
-    covariates_id <- base::apply(
-        covariates_sim,
-        MARGIN = 2,
-        FUN = function(x) match(1, x)
-    )
+    # Inverse-CDF draw: exactly one uniform per claim. rmultinom() consumed a
+    # data-dependent number of uniforms, and in R < 4.7 it accumulated in long
+    # double, whose precision differs between x86_64 and arm64, so the two
+    # architectures drew different streams from the same seed. The cumulative
+    # relativities are built with plain double additions (sum() and cumsum()
+    # also use long double) so that category boundaries are bit-identical on
+    # every platform. Zero-relativity combinations get zero-width intervals
+    # and are never drawn.
+    cum_relativities <- Reduce(`+`, all_relativities, accumulate = TRUE)
+    u <- stats::runif(n)
+    covariates_id <- findInterval(
+        u * cum_relativities[length(cum_relativities)],
+        cum_relativities
+    ) + 1L
 
     covariates_x <- all_combinations[covariates_id, ]
     rownames(covariates_x) <- NULL
