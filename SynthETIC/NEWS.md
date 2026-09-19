@@ -1,5 +1,38 @@
 # SynthETIC
 
+# SynthETIC 1.2.0
+
+## Breaking changes
+
+* The covariate combination of each claim, drawn in `simulate_covariates()` and
+hence `claim_size_adj()`, is now sampled by inverse transform from a single
+uniform per claim, instead of with `rmultinom()`. The distribution of the
+simulated covariates is unchanged, but **for a given seed the covariate levels,
+and every draw made after them, differ from those produced by 1.1.2**. The
+default power-normal `claim_size()` sampler and all other modules are
+unaffected, as are simulations that do not use covariates.
+
+  The reason is reproducibility across machines. `rmultinom()` consumes a
+data-dependent number of uniforms, and in R 4.6 and earlier it accumulates
+probabilities in `long double`, which has different precision on x86_64
+(Intel/AMD) and arm64 (e.g. Apple Silicon). Over 500 test seeds, the same seed
+produced different covariates on the two architectures in 497 of them, and
+every later module then diverged too, changing the number of payments by
+hundreds. The new sampler draws identical covariates on every platform. Thanks
+to Patrick Laub (@Pat-Laub, #6) for identifying `rmultinom()` as a source of
+platform dependence.
+
+  Results remain reproducible to about 1e-14 rather than bit-for-bit across
+platforms, because R's own `qnorm()` and `qbeta()` depend on the system maths
+library; claim and payment counts are unaffected by this.
+
+  To reproduce covariate simulations from an earlier release, install it from
+the CRAN archive, e.g. `remotes::install_version("SynthETIC", "1.1.2")`.
+
+## Note on the bundled datasets
+
+The bundled datasets are **unchanged** in this release.
+
 # SynthETIC 1.1.2
 
 ## Bug fixes
