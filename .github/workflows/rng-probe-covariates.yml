@@ -17,6 +17,8 @@ on:
       - tools/rng-probe/probe-covariates.R
       - tools/rng-probe/compare-multiseed.R
       - .github/workflows/rng-probe-covariates.yml
+      # Re-run when the package's covariate code changes, to verify fixes.
+      - SynthETIC/R/features_02a_claim_covariates.R
   workflow_dispatch:
 
 env:
