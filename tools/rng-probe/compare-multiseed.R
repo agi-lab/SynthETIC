@@ -43,9 +43,14 @@ classify <- function(a, b) {
   diff_fp <- a$fp != b$fp
   out[diff_fp] <- "ULP noise"
   out[a$len != b$len] <- "DESYNC (length)"
+  ## sum alone is blind wherever a stage preserves its total by construction,
+  ## so also test sum of squares (values changed) and the position-weighted
+  ## sum (values moved between claims).
+  rel <- function(x, y) abs(x - y) / pmax(abs(y), .Machine$double.xmin)
+  stats <- intersect(c("sum", "sumsq", "wsum"), names(a))
   moved <- diff_fp & a$len == b$len &
-    abs(a$sum - b$sum) / pmax(abs(b$sum), .Machine$double.xmin) > 1e-10
-  out[moved] <- "DESYNC (sum)"
+    Reduce(`|`, lapply(stats, function(st) rel(a[[st]], b[[st]]) > 1e-10))
+  out[moved] <- "DESYNC (values)"
   out
 }
 

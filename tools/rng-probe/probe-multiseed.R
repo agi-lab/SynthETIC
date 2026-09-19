@@ -18,6 +18,11 @@
 ##   fp   -- digest of the exact IEEE hex form of every value, so bit-identity
 ##           can be tested without keeping the values
 ##
+## sumsq and wsum (sum of i * x_i) are recorded alongside sum because several
+## stages preserve their total by construction: claim_size_adj rescales to the
+## unadjusted total, payment sizes sum to the claim size, and payment delays
+## sum to the settlement delay. Comparing sums alone cannot see a desync there.
+##
 ## Env: RNG_PROBE_SEEDS (default 500), RNG_PROBE_SEED0 (default 1).
 
 suppressMessages({
@@ -53,9 +58,11 @@ run_pipeline <- function(seed) {
 ## always means a real value difference and never a serialisation quirk.
 fingerprint <- function(x) {
   x <- as.double(unlist(x, use.names = FALSE))
-  list(len = length(x),
-       sum = sum(x),
-       fp  = digest::digest(sprintf("%a", x), algo = "md5"))
+  list(len   = length(x),
+       sum   = sum(x),
+       sumsq = sum(x^2),
+       wsum  = sum(x * seq_along(x)),
+       fp    = digest::digest(sprintf("%a", x), algo = "md5"))
 }
 
 stage_names <- c("n_vector", "occurrence_times", "claim_sizes", "notidel",
@@ -70,7 +77,8 @@ for (i in seq_along(seeds)) {
     f <- fingerprint(out[[s]])
     k <- k + 1L
     rows[[k]] <- data.frame(seed = seeds[i], stage = s, len = f$len,
-                            sum = f$sum, fp = f$fp, stringsAsFactors = FALSE)
+                            sum = f$sum, sumsq = f$sumsq, wsum = f$wsum,
+                            fp = f$fp, stringsAsFactors = FALSE)
   }
   if (i %% 50L == 0L) {
     cat(sprintf("  %d/%d seeds (%.1f min elapsed)\n", i, length(seeds),

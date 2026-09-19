@@ -17,6 +17,11 @@
 ##                   probe-multiseed.R), now including the drawn covariate
 ##                   combination and the adjusted claim sizes.
 ##
+## sumsq and wsum (sum of i * x_i) are recorded alongside sum because several
+## stages preserve their total by construction: claim_size_adj rescales to the
+## unadjusted total, payment sizes sum to the claim size, and payment delays
+## sum to the settlement delay. Comparing sums alone cannot see a desync there.
+##
 ## Env: RNG_PROBE_SEEDS (default 500), RNG_PROBE_SEED0 (default 1).
 
 suppressMessages({
@@ -73,7 +78,8 @@ run_pipeline <- function(seed) {
 
 fingerprint <- function(x) {
   x <- as.double(unlist(x, use.names = FALSE))
-  list(len = length(x), sum = sum(x), fp = hexfp(x))
+  list(len = length(x), sum = sum(x), sumsq = sum(x^2),
+       wsum = sum(x * seq_along(x)), fp = hexfp(x))
 }
 
 rows <- list()
@@ -83,8 +89,8 @@ for (i in seq_along(seeds)) {
   for (s in names(out)) {
     f <- fingerprint(out[[s]])
     rows[[length(rows) + 1L]] <- data.frame(
-      seed = seeds[i], stage = s, len = f$len, sum = f$sum, fp = f$fp,
-      stringsAsFactors = FALSE)
+      seed = seeds[i], stage = s, len = f$len, sum = f$sum,
+      sumsq = f$sumsq, wsum = f$wsum, fp = f$fp, stringsAsFactors = FALSE)
   }
   if (i %% 50L == 0L) {
     cat(sprintf("  %d/%d seeds (%.1f min elapsed)\n", i, length(seeds),
